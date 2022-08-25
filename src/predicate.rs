@@ -6,7 +6,7 @@ pub trait Predicate<Response>: Copy {
     fn check(&mut self, response: Response) -> Result<Self::Response, ()>;
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct EverythingPredicate;
 
 impl<R> Predicate<R> for EverythingPredicate {
@@ -17,7 +17,7 @@ impl<R> Predicate<R> for EverythingPredicate {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ContentTypeStartsWithPredicate<Patt>(Patt);
 
 impl<Patt: AsRef<str> + Copy> ContentTypeStartsWithPredicate<Patt> {

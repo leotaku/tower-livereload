@@ -10,6 +10,7 @@ use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
 use tower::{Layer, Service};
 
+#[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
     custom_prefix: Option<String>,
 }
@@ -46,7 +47,7 @@ type InnerService<S> = OverlayService<
     InjectService<S, ContentTypeStartsWithPredicate<&'static str>>,
 >;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LiveReloadService<S> {
     service: InnerService<S>,
 }

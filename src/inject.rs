@@ -9,7 +9,7 @@ use tower::Service;
 
 use crate::predicate::Predicate;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InjectService<S, Pred> {
     service: S,
     data: Bytes,

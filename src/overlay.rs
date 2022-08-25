@@ -51,6 +51,32 @@ impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
     }
 }
 
+impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.alternate() {
+            write!(
+                f,
+                "OverlayService: {{
+    map_keys: {:#?},
+    prefix: {:#?},
+    service: {:#?}
+}}",
+                self.map.keys(),
+                self.prefix,
+                self.service,
+            )
+        } else {
+            write!(
+                f,
+                "OverlayService: {{ map_keys: {:?}, prefix: {:?}, service: {:?} }}",
+                self.map.keys(),
+                self.prefix,
+                self.service,
+            )
+        }
+    }
+}
+
 impl<S, E, ReqBody, ResBody, ResBodyNew> Service<Request<ReqBody>>
     for OverlayService<ResBodyNew, E, S>
 where
