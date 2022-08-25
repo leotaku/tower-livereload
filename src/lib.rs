@@ -145,17 +145,18 @@ impl<S> LiveReload<S> {
     /// Create a new [`LiveReload`] middleware with a custom prefix.
     pub fn with_custom_prefix(service: S, prefix: impl Into<String>) -> Self {
         let prefix = prefix.into();
+        let long_poll_path = format!("{}/long-poll", prefix);
         let inject = InjectService::new(
             service,
             format!(
                 include_str!("../assets/polling.html"),
-                long_poll = format!("{}/long-poll", prefix),
+                long_poll = long_poll_path,
                 back_up = "/",
             )
             .into(),
             ContentTypeStartsWithPredicate::new("text/html"),
         );
-        let overlay = OverlayService::new(inject, prefix).path("/long-poll", || {
+        let overlay = OverlayService::new(inject).path(long_poll_path, || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
