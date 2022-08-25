@@ -3,7 +3,6 @@ mod long_poll;
 mod overlay;
 mod predicate;
 
-use bytes::Bytes;
 use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
 use long_poll::LongPollBody;
@@ -82,9 +81,8 @@ impl<S> LiveReloadService<S> {
 
 impl<ReqBody, RespBody, S> Service<Request<ReqBody>> for LiveReloadService<S>
 where
-    S: Service<Request<ReqBody>, Response = Response<RespBody>> + Send + 'static,
-    S::Future: Send + 'static,
-    RespBody: http_body::Body<Data = Bytes>,
+    S: Service<Request<ReqBody>, Response = Response<RespBody>>,
+    RespBody: http_body::Body,
 {
     type Response = <InnerService<S> as Service<Request<ReqBody>>>::Response;
     type Error = <InnerService<S> as Service<Request<ReqBody>>>::Error;
