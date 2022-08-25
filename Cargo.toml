@@ -1,0 +1,19 @@
+[package]
+authors = ["Leo Gaskin <leo.gaskin@le0.gs>"]
+categories = ["development-tools", "web-programming"]
+description = "A LiveReload middleware built on top of tower."
+edition = "2021"
+homepage = "https://github.com/leotaku/tower-livereload"
+keywords = ["axum", "live-reload", "livereload", "tower", "web"]
+license = "MIT OR Apache-2.0"
+name = "tower-livereload"
+readme = "README.md"
+repository = "https://github.com/leotaku/tower-livereload"
+version = "0.5.0"
+
+[dependencies]
+bytes = "1.2.1"
+http = "0.2.8"
+http-body = "0.4.5"
+pin-project-lite = "0.2.9"
+tower = "0.4.13"
