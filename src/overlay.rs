@@ -15,13 +15,15 @@ use tower::Service;
 
 pub struct OverlayService<B, E, S> {
     map: HashMap<String, Arc<dyn Fn() -> Result<Response<B>, E> + Send + Sync>>,
+    prefix: String,
     service: S,
 }
 
 impl<B, E, S> OverlayService<B, E, S> {
-    pub fn new(service: S) -> Self {
+    pub fn new(service: S, prefix: impl Into<String>) -> Self {
         Self {
             map: HashMap::new(),
+            prefix: prefix.into(),
             service,
         }
     }
@@ -31,8 +33,11 @@ impl<B, E, S> OverlayService<B, E, S> {
         path: impl Into<String>,
         resp: impl Fn() -> Result<Response<B>, E> + Send + Sync + 'static,
     ) -> Self {
+        let mut full_path = self.prefix.clone();
+        full_path.push_str(&path.into());
+
         let mut result = self;
-        result.map.insert(path.into(), Arc::new(resp));
+        result.map.insert(full_path, Arc::new(resp));
         result
     }
 }
@@ -41,6 +46,7 @@ impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
     fn clone(&self) -> Self {
         OverlayService {
             map: self.map.clone(),
+            prefix: self.prefix.clone(),
             service: self.service.clone(),
         }
     }

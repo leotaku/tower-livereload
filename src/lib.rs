@@ -11,11 +11,21 @@ use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
 use tower::{Layer, Service};
 
-pub struct LiveReloadLayer(());
+pub struct LiveReloadLayer {
+    custom_prefix: Option<String>,
+}
 
 impl LiveReloadLayer {
     pub fn new() -> LiveReloadLayer {
-        LiveReloadLayer(())
+        LiveReloadLayer {
+            custom_prefix: None,
+        }
+    }
+
+    pub fn with_custom_prefix(prefix: impl Into<String>) -> LiveReloadLayer {
+        LiveReloadLayer {
+            custom_prefix: Some(prefix.into()),
+        }
     }
 }
 
@@ -23,7 +33,11 @@ impl<S> Layer<S> for LiveReloadLayer {
     type Service = LiveReloadService<S>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        LiveReloadService::new(inner)
+        if let Some(ref custom_prefix) = self.custom_prefix {
+            LiveReloadService::with_custom_prefix(inner, custom_prefix.clone())
+        } else {
+            LiveReloadService::new(inner)
+        }
     }
 }
 
@@ -40,17 +54,22 @@ pub struct LiveReloadService<S> {
 
 impl<S> LiveReloadService<S> {
     pub fn new(service: S) -> Self {
+        Self::with_custom_prefix(service, "/tower-livereload/long-name-to-avoid-collisions")
+    }
+
+    pub fn with_custom_prefix(service: S, prefix: impl Into<String>) -> Self {
+        let prefix = prefix.into();
         let inject = InjectService::new(
             service,
             format!(
                 include_str!("../assets/polling.html"),
-                long_poll = "/long-poll",
+                long_poll = format!("{}/long-poll", prefix),
                 back_up = "/",
             )
             .into(),
             ContentTypeStartsWithPredicate::new("text/html"),
         );
-        let overlay = OverlayService::new(inject).path("/long-poll", || {
+        let overlay = OverlayService::new(inject, prefix).path("/long-poll", || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
