@@ -31,7 +31,7 @@
 //!
 //! # Ecosystem compatibility
 //!
-//! `tower-livereload` has been built from the ground to provide the highest
+//! `tower-livereload` has been built from the ground up to provide the highest
 //! amount of ecosystem compatibility.
 //!
 //! The provided middleware uses the [`http`] and [`http_body`] crates as its
@@ -89,10 +89,10 @@ pub struct LiveReloadLayer {
 }
 
 impl LiveReloadLayer {
-    /// Create a new [`LiveReloadLayer`] with the default prefix for
-    /// our own assets.
+    /// Create a new [`LiveReloadLayer`] with the default prefix for our own
+    /// assets.
     ///
-    /// The default prefix deliberately long and specific to avoid any
+    /// The default prefix is deliberately long and specific to avoid any
     /// accidental collisions with the wrapped service.
     pub fn new() -> LiveReloadLayer {
         LiveReloadLayer {
@@ -133,16 +133,16 @@ pub struct LiveReload<S> {
 }
 
 impl<S> LiveReload<S> {
-    /// Create a new [`LiveReload`] with the default prefix for
-    /// our own assets.
+    /// Create a new [`LiveReload`] middleware with the default prefix
+    /// for our own assets.
     ///
-    /// The default prefix deliberately long and specific to avoid any
-    /// accidental collisions with the wrapped service.
+    /// The default prefix is deliberately long and specific to avoid
+    /// any accidental collisions with the wrapped service.
     pub fn new(service: S) -> Self {
         Self::with_custom_prefix(service, "/tower-livereload/long-name-to-avoid-collisions")
     }
 
-    /// Create a new [`LiveReload`] with a custom prefix.
+    /// Create a new [`LiveReload`] middleware with a custom prefix.
     pub fn with_custom_prefix(service: S, prefix: impl Into<String>) -> Self {
         let prefix = prefix.into();
         let inject = InjectService::new(

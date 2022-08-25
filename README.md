@@ -48,7 +48,7 @@ More examples can be found on GitHub under [examples].
 
 ## Ecosystem compatibility
 
-`tower-livereload` has been built from the ground to provide the highest
+`tower-livereload` has been built from the ground up to provide the highest
 amount of ecosystem compatibility.
 
 The provided middleware uses the [`http`] and [`http_body`] crates as its
