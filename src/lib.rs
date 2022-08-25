@@ -82,7 +82,7 @@ use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
 use tower::{Layer, Service};
 
-/// Layer to apply [`LiveReloadService`] middleware.
+/// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
     custom_prefix: Option<String>,
@@ -109,13 +109,13 @@ impl LiveReloadLayer {
 }
 
 impl<S> Layer<S> for LiveReloadLayer {
-    type Service = LiveReloadService<S>;
+    type Service = LiveReload<S>;
 
     fn layer(&self, inner: S) -> Self::Service {
         if let Some(ref custom_prefix) = self.custom_prefix {
-            LiveReloadService::with_custom_prefix(inner, custom_prefix.clone())
+            LiveReload::with_custom_prefix(inner, custom_prefix.clone())
         } else {
-            LiveReloadService::new(inner)
+            LiveReload::new(inner)
         }
     }
 }
@@ -128,12 +128,12 @@ type InnerService<S> = OverlayService<
 
 /// Middleware to enable LiveReload functionality.
 #[derive(Clone, Debug)]
-pub struct LiveReloadService<S> {
+pub struct LiveReload<S> {
     service: InnerService<S>,
 }
 
-impl<S> LiveReloadService<S> {
-    /// Create a new [`LiveReloadService`] with the default prefix for
+impl<S> LiveReload<S> {
+    /// Create a new [`LiveReload`] with the default prefix for
     /// our own assets.
     ///
     /// The default prefix deliberately long and specific to avoid any
@@ -142,7 +142,7 @@ impl<S> LiveReloadService<S> {
         Self::with_custom_prefix(service, "/tower-livereload/long-name-to-avoid-collisions")
     }
 
-    /// Create a new [`LiveReloadService`] with a custom prefix.
+    /// Create a new [`LiveReload`] with a custom prefix.
     pub fn with_custom_prefix(service: S, prefix: impl Into<String>) -> Self {
         let prefix = prefix.into();
         let inject = InjectService::new(
@@ -162,11 +162,11 @@ impl<S> LiveReloadService<S> {
                 .body(LongPollBody::new())
         });
 
-        LiveReloadService { service: overlay }
+        LiveReload { service: overlay }
     }
 }
 
-impl<ReqBody, RespBody, S> Service<Request<ReqBody>> for LiveReloadService<S>
+impl<ReqBody, RespBody, S> Service<Request<ReqBody>> for LiveReload<S>
 where
     S: Service<Request<ReqBody>, Response = Response<RespBody>>,
     RespBody: http_body::Body,
