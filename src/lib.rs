@@ -27,7 +27,7 @@
 //!
 //! [axum]: https://docs.rs/axum
 //! [tower]: https://docs.rs/tower
-//! [examples]: https://github.com/leotaku/tower-livereload/examples
+//! [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
 //!
 //! # Ecosystem compatibility
 //!
