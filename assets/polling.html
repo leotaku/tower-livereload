@@ -1,0 +1,13 @@
+<script>
+  console.log("[livereload] connected...")
+  fetch("{long_poll}").finally(async () => {{
+    console.log("[livereload] disconnected...")
+    while (true) {{
+      try {{
+        await fetch("{back_up}").then(() => window.location.reload())
+      }} catch (e) {{
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }}
+    }}
+  }})
+</script>
