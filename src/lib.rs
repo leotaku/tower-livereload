@@ -73,6 +73,7 @@ mod inject;
 mod long_poll;
 mod overlay;
 mod predicate;
+mod ready_polyfill;
 
 use http::{header, Request, Response, StatusCode};
 use inject::InjectService;

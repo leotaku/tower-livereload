@@ -1,16 +1,13 @@
 use std::{
-    collections::HashMap,
-    error::Error,
-    fmt::Display,
-    future::Future,
-    sync::Arc,
-    task::{ready, Poll},
+    collections::HashMap, error::Error, fmt::Display, future::Future, sync::Arc, task::Poll,
 };
 
 use bytes::Buf;
 use http::{Request, Response};
 use http_body::Body;
 use tower::Service;
+
+use crate::ready_polyfill::ready;
 
 pub struct OverlayService<B, E, S> {
     map: HashMap<String, Arc<dyn Fn() -> Result<Response<B>, E> + Send + Sync>>,
