@@ -15,7 +15,7 @@
 [librs-badge]: https://img.shields.io/badge/lib.rs-linked-informational
 [docs-badge]: https://img.shields.io/docsrs/tower-livereload
 
-A LiveReload middleware built on top of [tower]:
+A LiveReload middleware built on top of [tower].
 
 ## Example
 

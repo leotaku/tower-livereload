@@ -1,4 +1,4 @@
-//! A LiveReload middleware built on top of [tower]:
+//! A LiveReload middleware built on top of [tower].
 //!
 //! # Example
 //!
