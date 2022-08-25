@@ -7,7 +7,7 @@
 
 [build-url]: https://github.com/leotaku/tower-livereload/actions
 [crates-url]: https://crates.io/crates/tower-livereload
-[librs-url]: https://lib.rs/tower-livereload
+[librs-url]: https://lib.rs/crates/tower-livereload
 [docs-url]: https://docs.rs/tower-livereload
 
 [build-badge]: https://img.shields.io/github/workflow/status/leotaku/tower-livereload/build
