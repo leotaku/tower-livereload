@@ -11,7 +11,6 @@ use std::{
 use bytes::Buf;
 use http::{Request, Response};
 use http_body::Body;
-use pin_project::pin_project;
 use tower::Service;
 
 pub struct OverlayService<B, E, S> {
@@ -79,11 +78,12 @@ where
     }
 }
 
-#[pin_project]
-pub struct OverlayFuture<B, E, F> {
-    #[pin]
-    inner: F,
-    response: Option<Result<Response<B>, E>>,
+pin_project_lite::pin_project! {
+    pub struct OverlayFuture<B, E, F> {
+        #[pin]
+        inner: F,
+        response: Option<Result<Response<B>, E>>,
+    }
 }
 
 impl<B, E, PB, PE, F> Future for OverlayFuture<B, E, F>
@@ -95,18 +95,23 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         if let Some(resp) = this.response.take() {
-            Poll::Ready(resp.map(|ok| ok.map(OverlayBody::A)).or_else(|_| panic!()))
+            Poll::Ready(
+                resp.map(|ok| ok.map(|a| OverlayBody::A { a }))
+                    .or_else(|_| panic!()),
+            )
         } else {
             let polled = ready!(this.inner.poll(cx));
-            Poll::Ready(polled.map(|resp| resp.map(OverlayBody::B)))
+            Poll::Ready(polled.map(|resp| resp.map(|b| OverlayBody::B { b })))
         }
     }
 }
 
-#[pin_project(project = OverlayBodyProj)]
-pub enum OverlayBody<A, B> {
-    A(#[pin] A),
-    B(#[pin] B),
+pin_project_lite::pin_project! {
+    #[project = OverlayBodyProj]
+    pub enum OverlayBody<A, B> {
+        A{#[pin] a: A},
+        B{#[pin] b: B},
+    }
 }
 
 impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody<A, B> {
@@ -118,12 +123,12 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
         match self.project() {
-            OverlayBodyProj::A(a) => match ready!(a.poll_data(cx)) {
+            OverlayBodyProj::A { a } => match ready!(a.poll_data(cx)) {
                 Some(Ok(ok)) => Poll::Ready(Some(Ok(ok))),
                 Some(Err(err)) => Poll::Ready(Some(Err(OverlayError::A(err)))),
                 None => Poll::Ready(None),
             },
-            OverlayBodyProj::B(b) => match ready!(b.poll_data(cx)) {
+            OverlayBodyProj::B { b } => match ready!(b.poll_data(cx)) {
                 Some(Ok(ok)) => Poll::Ready(Some(Ok(ok))),
                 Some(Err(err)) => Poll::Ready(Some(Err(OverlayError::B(err)))),
                 None => Poll::Ready(None),
@@ -136,10 +141,10 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
         match self.project() {
-            OverlayBodyProj::A(a) => {
+            OverlayBodyProj::A { a } => {
                 Poll::Ready(Ok(ready!(a.poll_trailers(cx)).map_err(OverlayError::A)?))
             }
-            OverlayBodyProj::B(b) => {
+            OverlayBodyProj::B { b } => {
                 Poll::Ready(Ok(ready!(b.poll_trailers(cx)).map_err(OverlayError::B)?))
             }
         }

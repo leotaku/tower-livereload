@@ -1,13 +1,12 @@
 use std::{convert::Infallible, task::Poll};
 
-use pin_project::pin_project;
-
-#[pin_project]
-pub struct LongPollBody(());
+pin_project_lite::pin_project! {
+    pub struct LongPollBody { _private: () }
+}
 
 impl LongPollBody {
     pub fn new() -> Self {
-        LongPollBody(())
+        LongPollBody { _private: () }
     }
 }
 

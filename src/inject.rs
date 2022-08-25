@@ -6,7 +6,6 @@ use std::{
 
 use bytes::{Buf, Bytes};
 use http::{header, Request, Response};
-use pin_project::pin_project;
 use tower::Service;
 
 use crate::predicate::Predicate;
@@ -51,12 +50,13 @@ where
     }
 }
 
-#[pin_project]
-pub struct InjectResponseFuture<F, Pred> {
-    #[pin]
-    inner: F,
-    data: Bytes,
-    predicate: Pred,
+pin_project_lite::pin_project! {
+    pub struct InjectResponseFuture<F, Pred> {
+        #[pin]
+        inner: F,
+        data: Bytes,
+        predicate: Pred,
+    }
 }
 
 impl<F, Pred, B, E> Future for InjectResponseFuture<F, Pred>
@@ -92,11 +92,12 @@ where
     }
 }
 
-#[pin_project]
-pub struct InjectBody<B> {
-    #[pin]
-    body: B,
-    inject: Option<Bytes>,
+pin_project_lite::pin_project! {
+    pub struct InjectBody<B> {
+        #[pin]
+        body: B,
+        inject: Option<Bytes>,
+    }
 }
 
 impl<B: http_body::Body> http_body::Body for InjectBody<B> {
