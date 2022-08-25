@@ -1,7 +1,6 @@
 use std::{
     future::Future,
-    pin::Pin,
-    task::{ready, Context, Poll},
+    task::{ready, Poll},
 };
 
 use bytes::{Buf, Bytes};
@@ -37,7 +36,7 @@ where
     type Error = S::Error;
     type Future = InjectResponseFuture<S::Future, Pred>;
 
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
@@ -67,7 +66,7 @@ where
 {
     type Output = Result<Response<InjectBody<B>>, E>;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         let response = ready!(this.inner.poll(cx)?);
 
@@ -105,8 +104,8 @@ impl<B: http_body::Body> http_body::Body for InjectBody<B> {
     type Error = B::Error;
 
     fn poll_data(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
         let this = self.project();
         let poll = ready!(this
@@ -123,8 +122,8 @@ impl<B: http_body::Body> http_body::Body for InjectBody<B> {
     }
 
     fn poll_trailers(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
     ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
         self.project().body.poll_trailers(cx)
     }

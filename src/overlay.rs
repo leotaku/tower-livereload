@@ -3,9 +3,8 @@ use std::{
     error::Error,
     fmt::Display,
     future::Future,
-    pin::Pin,
     sync::Arc,
-    task::{ready, Context, Poll},
+    task::{ready, Poll},
 };
 
 use bytes::Buf;
@@ -98,7 +97,7 @@ where
 {
     type Output = Result<Response<OverlayBody<B, PB>>, PE>;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         if let Some(resp) = this.response.take() {
             Poll::Ready(
