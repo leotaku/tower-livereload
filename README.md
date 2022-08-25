@@ -76,7 +76,7 @@ not be set.
 
 If LiveReload is not working for some of your pages, ensure that these
 heuristics apply to your responses. In particular, if you use middleware to
-compress your HTML, ensure that the [`LiveReloadLayer`] middleware is
+compress your HTML, ensure that the [`LiveReload`] middleware is
 applied before your compression middleware.
 
 [`Content-Type`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
@@ -85,7 +85,7 @@ applied before your compression middleware.
 
 <!-- Override internal links from README generation: -->
 
-[`LiveReloadLayer`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReloadLayer.html
+[`LiveReload`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReload.html
 
 ## License
 

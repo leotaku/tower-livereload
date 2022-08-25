@@ -19,7 +19,7 @@
 
 <!-- Override internal links from README generation: -->
 
-[`LiveReloadLayer`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReloadLayer.html
+[`LiveReload`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReload.html
 
 ## License
 
