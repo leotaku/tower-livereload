@@ -72,9 +72,14 @@ where
 
         let content_length: Option<usize> = response
             .headers()
-            .get(header::CONTENT_LENGTH)
-            .map(|value| value.to_str().ok().map(|s| s.parse().ok()).flatten())
-            .flatten();
+            .get(header::CONTENT_ENCODING)
+            .map_or_else(|| Some(()), |_| None)
+            .and_then(|_| {
+                response
+                    .headers()
+                    .get(header::CONTENT_LENGTH)
+                    .and_then(|value| value.to_str().ok().and_then(|s| s.parse().ok()))
+            });
 
         let (mut parts, body) = response.into_parts();
         let inject = if let Some(length) = content_length {
