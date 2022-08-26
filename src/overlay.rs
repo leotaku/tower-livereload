@@ -1,6 +1,4 @@
-use std::{
-    collections::HashMap, error::Error, fmt::Display, future::Future, sync::Arc, task::Poll,
-};
+use std::{collections::HashMap, fmt::Display, future::Future, sync::Arc, task::Poll};
 
 use bytes::Buf;
 use http::{Request, Response};
@@ -176,7 +174,7 @@ pub enum OverlayError<A, B> {
     B(B),
 }
 
-impl<A: Error, B: Error> Error for OverlayError<A, B> {}
+impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayError<A, B> {}
 
 impl<A: Display, B: Display> Display for OverlayError<A, B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
