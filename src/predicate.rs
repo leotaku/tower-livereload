@@ -1,9 +1,7 @@
 use http::{header, Response};
 
 pub trait Predicate<Response>: Copy {
-    type Response;
-
-    fn check(&mut self, response: Response) -> Result<Self::Response, ()>;
+    fn check<'a>(&mut self, response: &'a Response) -> Result<&'a Response, ()>;
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -16,9 +14,7 @@ impl<Patt: AsRef<str> + Copy> ContentTypeStartsWithPredicate<Patt> {
 }
 
 impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWithPredicate<Patt> {
-    type Response = Response<T>;
-
-    fn check(&mut self, response: Response<T>) -> Result<Self::Response, ()> {
+    fn check<'a>(&mut self, response: &'a Response<T>) -> Result<&'a Response<T>, ()> {
         let matches = response
             .headers()
             .get(header::CONTENT_TYPE)

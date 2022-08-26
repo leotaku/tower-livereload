@@ -67,10 +67,16 @@ where
         let this = self.project();
         let response = ready!(this.inner.poll(cx)?);
 
-        let content_length: Option<usize> = response
-            .headers()
-            .get(header::CONTENT_ENCODING)
-            .map_or_else(|| Some(()), |_| None)
+        let content_length: Option<usize> = this
+            .predicate
+            .check(&response)
+            .ok()
+            .and_then(|_| {
+                response
+                    .headers()
+                    .get(header::CONTENT_ENCODING)
+                    .map_or_else(|| Some(()), |_| None)
+            })
             .and_then(|_| {
                 response
                     .headers()
