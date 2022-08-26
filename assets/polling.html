@@ -4,9 +4,14 @@
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
       .catch(() => setTimeout(() => retry(it), 1000));
+  let disconnected = () => {{
+      console.log("[tower-livereload] disconnected...");
+      retry("{back_up}");
+  }};
+
   console.log("[tower-livereload] connected...");
   fetch("{long_poll}")
-    .finally(() => console.log("[tower-livereload] disconnected..."))
-    .finally(() => retry("{back_up}"))
+    .then((it) => it.text().finally(disconnected))
+    .finally(disconnected)
     .catch(() => null);
 </script>
