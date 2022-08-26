@@ -101,7 +101,7 @@ impl LiveReloadLayer {
     }
 
     /// Create a new [`LiveReloadLayer`] with a custom prefix.
-    pub fn with_custom_prefix(prefix: impl Into<String>) -> LiveReloadLayer {
+    pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> LiveReloadLayer {
         LiveReloadLayer {
             custom_prefix: Some(prefix.into()),
         }
@@ -143,7 +143,7 @@ impl<S> LiveReload<S> {
     }
 
     /// Create a new [`LiveReload`] middleware with a custom prefix.
-    pub fn with_custom_prefix(service: S, prefix: impl Into<String>) -> Self {
+    pub fn with_custom_prefix<P: Into<String>>(service: S, prefix: P) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let inject = InjectService::new(
