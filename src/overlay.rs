@@ -46,7 +46,7 @@ impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
             write!(
                 f,
                 "OverlayService: {{
-    map_keys: {:#?},
+    map.keys: {:#?},
     service: {:#?}
 }}",
                 self.map.keys(),
@@ -55,7 +55,7 @@ impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
         } else {
             write!(
                 f,
-                "OverlayService: {{ map_keys: {:?}, service: {:?} }}",
+                "OverlayService: {{ map.keys: {:?}, service: {:?} }}",
                 self.map.keys(),
                 self.service,
             )
