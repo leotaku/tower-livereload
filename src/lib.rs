@@ -121,9 +121,13 @@ impl<S> Layer<S> for LiveReloadLayer {
 }
 
 type InnerService<S> = OverlayService<
-    LongPollBody,
+    String,
     http::Error,
-    InjectService<S, ContentTypeStartsWithPredicate<&'static str>>,
+    OverlayService<
+        LongPollBody,
+        http::Error,
+        InjectService<S, ContentTypeStartsWithPredicate<&'static str>>,
+    >,
 >;
 
 /// Middleware to enable LiveReload functionality.
@@ -146,24 +150,33 @@ impl<S> LiveReload<S> {
     pub fn with_custom_prefix<P: Into<String>>(service: S, prefix: P) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
+        let back_up_path = format!("{}/back-up", prefix);
         let inject = InjectService::new(
             service,
             format!(
                 include_str!("../assets/polling.html"),
                 long_poll = long_poll_path,
-                back_up = "/",
+                back_up = back_up_path,
             )
             .into(),
             ContentTypeStartsWithPredicate::new("text/html"),
         );
-        let overlay = OverlayService::new(inject).path(long_poll_path, || {
+        let overlay_poll = OverlayService::new(inject).path(long_poll_path, || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
                 .body(LongPollBody::new())
         });
+        let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "text/plain")
+                .body("Ok".to_owned())
+        });
 
-        LiveReload { service: overlay }
+        LiveReload {
+            service: overlay_up,
+        }
     }
 }
 
