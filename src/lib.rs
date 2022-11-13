@@ -80,12 +80,27 @@ use inject::InjectService;
 use long_poll::LongPollBody;
 use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
+use tokio::sync::broadcast::{Receiver, Sender};
 use tower::{Layer, Service};
+
+/// Utility to send reload requests to clients.
+#[derive(Debug)]
+pub struct Reloader {
+    sender: Sender<()>,
+}
+
+impl Reloader {
+    /// Send a reload request to all open clients.
+    pub fn reload(&self) {
+        self.sender.send(()).ok();
+    }
+}
 
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
     custom_prefix: Option<String>,
+    sender: Sender<()>,
 }
 
 impl LiveReloadLayer {
@@ -95,15 +110,26 @@ impl LiveReloadLayer {
     /// The default prefix is deliberately long and specific to avoid any
     /// accidental collisions with the wrapped service.
     pub fn new() -> LiveReloadLayer {
+        let (sender, _) = tokio::sync::broadcast::channel(1);
         LiveReloadLayer {
             custom_prefix: None,
+            sender,
         }
     }
 
     /// Create a new [`LiveReloadLayer`] with a custom prefix.
     pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> LiveReloadLayer {
+        let (sender, _) = tokio::sync::broadcast::channel(1);
         LiveReloadLayer {
             custom_prefix: Some(prefix.into()),
+            sender,
+        }
+    }
+
+    /// Create a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
+    pub fn reloader(&self) -> Reloader {
+        Reloader {
+            sender: self.sender.clone(),
         }
     }
 }
@@ -113,9 +139,9 @@ impl<S> Layer<S> for LiveReloadLayer {
 
     fn layer(&self, inner: S) -> Self::Service {
         if let Some(ref custom_prefix) = self.custom_prefix {
-            LiveReload::with_custom_prefix(inner, custom_prefix.clone())
+            LiveReload::with_custom_prefix(inner, self.sender.subscribe(), custom_prefix.clone())
         } else {
-            LiveReload::new(inner)
+            LiveReload::new(inner, self.sender.subscribe())
         }
     }
 }
@@ -142,12 +168,20 @@ impl<S> LiveReload<S> {
     ///
     /// The default prefix is deliberately long and specific to avoid
     /// any accidental collisions with the wrapped service.
-    pub fn new(service: S) -> Self {
-        Self::with_custom_prefix(service, "/tower-livereload/long-name-to-avoid-collisions")
+    fn new(service: S, receiver: Receiver<()>) -> Self {
+        Self::with_custom_prefix(
+            service,
+            receiver,
+            "/tower-livereload/long-name-to-avoid-collisions",
+        )
     }
 
     /// Create a new [`LiveReload`] middleware with a custom prefix.
-    pub fn with_custom_prefix<P: Into<String>>(service: S, prefix: P) -> Self {
+    fn with_custom_prefix<P: Into<String>>(
+        service: S,
+        receiver: Receiver<()>,
+        prefix: P,
+    ) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let back_up_path = format!("{}/back-up", prefix);
@@ -161,11 +195,11 @@ impl<S> LiveReload<S> {
             .into(),
             ContentTypeStartsWithPredicate::new("text/html"),
         );
-        let overlay_poll = OverlayService::new(inject).path(long_poll_path, || {
+        let overlay_poll = OverlayService::new(inject).path(long_poll_path, move || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
-                .body(LongPollBody::new())
+                .body(LongPollBody::new(receiver.resubscribe()))
         });
         let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
             Response::builder()
