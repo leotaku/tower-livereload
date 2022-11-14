@@ -20,6 +20,7 @@
 <!-- Override internal links from README generation: -->
 
 [`LiveReload`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReload.html
+[`Reloader`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.Reloader.html
 
 ## License
 
