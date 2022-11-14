@@ -80,7 +80,7 @@ use inject::InjectService;
 use long_poll::LongPollBody;
 use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
-use tokio::sync::broadcast::{Receiver, Sender};
+use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
 /// Utility to send reload requests to clients.
@@ -90,6 +90,16 @@ pub struct Reloader {
 }
 
 impl Reloader {
+    /// Create a new [`Reloader`].
+    ///
+    /// This can be manually passed to the [`LiveReload`] constructors, but in
+    /// most cases the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`]
+    /// utilities are preferred.
+    pub fn new() -> Self {
+        let (sender, _) = tokio::sync::broadcast::channel(1);
+        Self { sender }
+    }
+
     /// Send a reload request to all open clients.
     pub fn reload(&self) {
         self.sender.send(()).ok();
@@ -100,7 +110,7 @@ impl Reloader {
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
     custom_prefix: Option<String>,
-    sender: Sender<()>,
+    reloader: Reloader,
 }
 
 impl LiveReloadLayer {
@@ -110,27 +120,23 @@ impl LiveReloadLayer {
     /// The default prefix is deliberately long and specific to avoid any
     /// accidental collisions with the wrapped service.
     pub fn new() -> LiveReloadLayer {
-        let (sender, _) = tokio::sync::broadcast::channel(1);
         LiveReloadLayer {
             custom_prefix: None,
-            sender,
+            reloader: Reloader::new(),
         }
     }
 
     /// Create a new [`LiveReloadLayer`] with a custom prefix.
     pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> LiveReloadLayer {
-        let (sender, _) = tokio::sync::broadcast::channel(1);
         LiveReloadLayer {
             custom_prefix: Some(prefix.into()),
-            sender,
+            reloader: Reloader::new(),
         }
     }
 
-    /// Create a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
+    /// Return a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
     pub fn reloader(&self) -> Reloader {
-        Reloader {
-            sender: self.sender.clone(),
-        }
+        self.reloader.clone()
     }
 }
 
@@ -139,9 +145,9 @@ impl<S> Layer<S> for LiveReloadLayer {
 
     fn layer(&self, inner: S) -> Self::Service {
         if let Some(ref custom_prefix) = self.custom_prefix {
-            LiveReload::with_custom_prefix(inner, self.sender.subscribe(), custom_prefix.clone())
+            LiveReload::with_custom_prefix(inner, self.reloader.clone(), custom_prefix.clone())
         } else {
-            LiveReload::new(inner, self.sender.subscribe())
+            LiveReload::new(inner, self.reloader.clone())
         }
     }
 }
@@ -168,20 +174,16 @@ impl<S> LiveReload<S> {
     ///
     /// The default prefix is deliberately long and specific to avoid
     /// any accidental collisions with the wrapped service.
-    fn new(service: S, receiver: Receiver<()>) -> Self {
+    pub fn new(service: S, reloader: Reloader) -> Self {
         Self::with_custom_prefix(
             service,
-            receiver,
+            reloader,
             "/tower-livereload/long-name-to-avoid-collisions",
         )
     }
 
     /// Create a new [`LiveReload`] middleware with a custom prefix.
-    fn with_custom_prefix<P: Into<String>>(
-        service: S,
-        receiver: Receiver<()>,
-        prefix: P,
-    ) -> Self {
+    pub fn with_custom_prefix<P: Into<String>>(service: S, reloader: Reloader, prefix: P) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let back_up_path = format!("{}/back-up", prefix);
@@ -199,7 +201,7 @@ impl<S> LiveReload<S> {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
-                .body(LongPollBody::new(receiver.resubscribe()))
+                .body(LongPollBody::new(reloader.sender.subscribe()))
         });
         let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
             Response::builder()
