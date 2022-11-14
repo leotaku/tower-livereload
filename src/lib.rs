@@ -84,7 +84,7 @@ use tokio::sync::broadcast::{Receiver, Sender};
 use tower::{Layer, Service};
 
 /// Utility to send reload requests to clients.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Reloader {
     sender: Sender<()>,
 }
