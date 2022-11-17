@@ -40,8 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-If you now continuously rebuild and rerun this example e.g. using
-[watchexec], you should see your browser reload whenever you change the code.
+If you continuously rebuild and rerun this example e.g. using [watchexec],
+you should see your browser reload whenever the code is changed.
 
 More examples can be found on GitHub under [examples].
 
