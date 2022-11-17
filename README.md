@@ -40,11 +40,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+If you now continuously rebuild and rerun this example e.g. using
+[watchexec], you should see your browser reload whenever you change the code.
+
 More examples can be found on GitHub under [examples].
 
 [axum]: https://docs.rs/axum
 [tower]: https://docs.rs/tower
 [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
+[watchexec]: https://watchexec.github.io/
 
 ## Manual reload
 

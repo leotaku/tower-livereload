@@ -23,11 +23,15 @@
 //! }
 //! ```
 //!
+//! If you continuously rebuild and rerun this example e.g. using [watchexec],
+//! you should see your browser reload whenever the code is changed.
+//!
 //! More examples can be found on GitHub under [examples].
 //!
 //! [axum]: https://docs.rs/axum
 //! [tower]: https://docs.rs/tower
 //! [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
+//! [watchexec]: https://watchexec.github.io/
 //!
 //! # Manual reload
 //!
