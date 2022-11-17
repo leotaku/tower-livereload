@@ -29,6 +29,14 @@
 //! [tower]: https://docs.rs/tower
 //! [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
 //!
+//! # Manual reload
+//!
+//! With the [`Reloader`] utility, it is possible to reload your web browser
+//! entirely using hooks from Rust code. See this [example] on GitHub for
+//! pointers on how to implement a self-contained live-reloading static server.
+//!
+//! [example]: https://github.com/leotaku/tower-livereload/blob/master/examples/axum-in-process/
+//!
 //! # Ecosystem compatibility
 //!
 //! `tower-livereload` has been built from the ground up to provide the highest
@@ -38,9 +46,6 @@
 //! HTTP abstractions. That means it is compatible with any library or framework
 //! that also uses those crates, such as [`hyper`], [`axum`], [`tonic`], and
 //! [`warp`].
-//!
-//! Moreover, we do not depend on any async runtime, keeping your dependency
-//! graph small and simplifying debugging.
 //!
 //! [`http`]: https://docs.rs/http
 //! [`http_body`]: https://docs.rs/http_body
@@ -80,12 +85,37 @@ use inject::InjectService;
 use long_poll::LongPollBody;
 use overlay::OverlayService;
 use predicate::ContentTypeStartsWithPredicate;
+use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
+
+/// Utility to send reload requests to clients.
+#[derive(Clone, Debug)]
+pub struct Reloader {
+    sender: Sender<()>,
+}
+
+impl Reloader {
+    /// Create a new [`Reloader`].
+    ///
+    /// This can be manually passed to the [`LiveReload`] constructors, but in
+    /// most cases the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`]
+    /// utilities are preferred.
+    pub fn new() -> Self {
+        let (sender, _) = tokio::sync::broadcast::channel(1);
+        Self { sender }
+    }
+
+    /// Send a reload request to all open clients.
+    pub fn reload(&self) {
+        self.sender.send(()).ok();
+    }
+}
 
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
     custom_prefix: Option<String>,
+    reloader: Reloader,
 }
 
 impl LiveReloadLayer {
@@ -97,6 +127,7 @@ impl LiveReloadLayer {
     pub fn new() -> LiveReloadLayer {
         LiveReloadLayer {
             custom_prefix: None,
+            reloader: Reloader::new(),
         }
     }
 
@@ -104,7 +135,13 @@ impl LiveReloadLayer {
     pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> LiveReloadLayer {
         LiveReloadLayer {
             custom_prefix: Some(prefix.into()),
+            reloader: Reloader::new(),
         }
+    }
+
+    /// Return a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
+    pub fn reloader(&self) -> Reloader {
+        self.reloader.clone()
     }
 }
 
@@ -113,9 +150,9 @@ impl<S> Layer<S> for LiveReloadLayer {
 
     fn layer(&self, inner: S) -> Self::Service {
         if let Some(ref custom_prefix) = self.custom_prefix {
-            LiveReload::with_custom_prefix(inner, custom_prefix.clone())
+            LiveReload::with_custom_prefix(inner, self.reloader.clone(), custom_prefix.clone())
         } else {
-            LiveReload::new(inner)
+            LiveReload::new(inner, self.reloader.clone())
         }
     }
 }
@@ -142,12 +179,16 @@ impl<S> LiveReload<S> {
     ///
     /// The default prefix is deliberately long and specific to avoid
     /// any accidental collisions with the wrapped service.
-    pub fn new(service: S) -> Self {
-        Self::with_custom_prefix(service, "/tower-livereload/long-name-to-avoid-collisions")
+    pub fn new(service: S, reloader: Reloader) -> Self {
+        Self::with_custom_prefix(
+            service,
+            reloader,
+            "/tower-livereload/long-name-to-avoid-collisions",
+        )
     }
 
     /// Create a new [`LiveReload`] middleware with a custom prefix.
-    pub fn with_custom_prefix<P: Into<String>>(service: S, prefix: P) -> Self {
+    pub fn with_custom_prefix<P: Into<String>>(service: S, reloader: Reloader, prefix: P) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let back_up_path = format!("{}/back-up", prefix);
@@ -161,11 +202,11 @@ impl<S> LiveReload<S> {
             .into(),
             ContentTypeStartsWithPredicate::new("text/html"),
         );
-        let overlay_poll = OverlayService::new(inject).path(long_poll_path, || {
+        let overlay_poll = OverlayService::new(inject).path(long_poll_path, move || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
-                .body(LongPollBody::new())
+                .body(LongPollBody::new(reloader.sender.subscribe()))
         });
         let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
             Response::builder()

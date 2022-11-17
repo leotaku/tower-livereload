@@ -1,10 +1,15 @@
 use std::{convert::Infallible, task::Poll};
+use tokio::sync::broadcast::Receiver;
 
-pub struct LongPollBody(());
+pub struct LongPollBody {
+    receiver: Option<Receiver<()>>,
+}
 
 impl LongPollBody {
-    pub fn new() -> Self {
-        LongPollBody(())
+    pub fn new(receiver: Receiver<()>) -> Self {
+        LongPollBody {
+            receiver: Some(receiver),
+        }
     }
 }
 
@@ -13,10 +18,20 @@ impl http_body::Body for LongPollBody {
     type Error = Infallible;
 
     fn poll_data(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
-        Poll::Pending
+        match self.receiver.take() {
+            Some(mut receiver) => {
+                let waker = cx.waker().clone();
+                tokio::spawn(async move {
+                    receiver.recv().await.ok();
+                    waker.wake();
+                });
+                Poll::Pending
+            }
+            None => Poll::Ready(None),
+        }
     }
 
     fn poll_trailers(

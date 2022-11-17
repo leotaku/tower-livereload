@@ -46,6 +46,14 @@ More examples can be found on GitHub under [examples].
 [tower]: https://docs.rs/tower
 [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
 
+## Manual reload
+
+With the [`Reloader`] utility, it is possible to reload your web browser
+entirely using hooks from Rust code. See this [example] on GitHub for
+pointers on how to implement a self-contained live-reloading static server.
+
+[example]: https://github.com/leotaku/tower-livereload/blob/master/examples/axum-in-process/
+
 ## Ecosystem compatibility
 
 `tower-livereload` has been built from the ground up to provide the highest
@@ -55,9 +63,6 @@ The provided middleware uses the [`http`] and [`http_body`] crates as its
 HTTP abstractions. That means it is compatible with any library or framework
 that also uses those crates, such as [`hyper`], [`axum`], [`tonic`], and
 [`warp`].
-
-Moreover, we do not depend on any async runtime, keeping your dependency
-graph small and simplifying debugging.
 
 [`http`]: https://docs.rs/http
 [`http_body`]: https://docs.rs/http_body
@@ -86,6 +91,7 @@ applied before your compression middleware.
 <!-- Override internal links from README generation: -->
 
 [`LiveReload`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.LiveReload.html
+[`Reloader`]: https://docs.rs/tower-livereload/latest/tower_livereload/struct.Reloader.html
 
 ## License
 
