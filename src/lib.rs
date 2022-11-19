@@ -1,4 +1,4 @@
-//! A LiveReload middleware built on top of [tower].
+//! A middleware for browser reloading, built on top of [tower].
 //!
 //! # Example
 //!
