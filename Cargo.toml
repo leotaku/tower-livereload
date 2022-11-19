@@ -13,6 +13,7 @@ version = "0.7.1-wip"
 
 [lib]
 doctest = false
+path = "./src/lib.rs"
 
 [dependencies]
 bytes = "1.2.1"
