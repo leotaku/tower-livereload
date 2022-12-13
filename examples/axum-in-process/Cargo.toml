@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 axum = "0.5.15"
 notify = "5.0.0"
-tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "sync", "rt"] }
+tokio = { version = "1.23.0", features = ["macros", "rt-multi-thread", "sync", "rt"] }
 tower = "0.4.13"
-tower-http = { version = "0.3.4", features = ["fs"] }
+tower-http = { version = "0.3.5", features = ["fs"] }
 tower-livereload = { path = "../.." }
