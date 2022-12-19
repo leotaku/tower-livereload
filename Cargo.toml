@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 name = "tower-livereload"
 readme = "README.md"
 repository = "https://github.com/leotaku/tower-livereload"
-version = "0.7.1-wip"
+version = "0.7.1"
 
 [lib]
 doctest = false
