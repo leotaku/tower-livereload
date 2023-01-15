@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let livereload = LiveReloadLayer::new();
     let reloader = livereload.reloader();
     let app = Router::new()
-        .route("/", serve_dir("assets"))
+        .nest_service("/", serve_dir("assets"))
         .layer(livereload);
 
     let mut watcher = notify::recommended_watcher(move |_| reloader.reload())?;
