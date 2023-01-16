@@ -1,0 +1,22 @@
+[package]
+authors = ["Leo Gaskin <leo.gaskin@le0.gs>"]
+categories = ["development-tools", "web-programming::http-server"]
+description = "A development server with live-reload capabilities."
+edition = "2021"
+homepage = "https://github.com/leotaku/tower-livereload/examples/livehttpd"
+keywords = ["front-end", "development", "tool", "server", "http"]
+license = "MIT OR Apache-2.0"
+name = "livehttpd"
+readme = "README.md"
+repository = "https://github.com/leotaku/tower-livereload"
+version = "1.0.0"
+
+[dependencies]
+axum = "0.6.2"
+clap = { version = "4.1.1", features = ["derive"] }
+notify = "5.0.0"
+tokio = { version = "1.24.1", features = ["macros", "rt-multi-thread", "sync", "rt"] }
+tower = "0.4.13"
+tower-http = { version = "0.3.5", features = ["fs", "set-header"] }
+tower-livereload = { version = "0.7.1", path = "../.." }
+tracing-subscriber = "0.3.16"
