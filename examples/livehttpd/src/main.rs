@@ -53,7 +53,13 @@ fn no_cache_layer() -> Stack<Srhl, Stack<Srhl, Srhl>> {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
+    if let Err(err) = try_main().await {
+        eprintln!("{}", err);
+    }
+}
+
+async fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Command::parse();
 
     let livereload = LiveReloadLayer::new();
