@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("listening on: http://{}/", addr);
 
     tracing_subscriber::fmt::init();
-    axum::Server::bind(&addr)
+    axum::Server::try_bind(&addr)?
         .serve(app.into_make_service())
         .await?;
 
