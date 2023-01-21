@@ -54,8 +54,8 @@ fn no_cache_layer() -> Stack<Srhl, Stack<Srhl, Srhl>> {
 
 #[tokio::main]
 async fn main() {
-    if let Err(err) = try_main().await {
-        eprintln!("{}", err);
+    if let Err(error) = try_main().await {
+        eprintln!("{}", error);
     }
 }
 
