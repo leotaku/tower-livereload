@@ -128,16 +128,16 @@ impl LiveReloadLayer {
     ///
     /// The default prefix is deliberately long and specific to avoid any
     /// accidental collisions with the wrapped service.
-    pub fn new() -> LiveReloadLayer {
-        LiveReloadLayer {
+    pub fn new() -> Self {
+        Self {
             custom_prefix: None,
             reloader: Reloader::new(),
         }
     }
 
     /// Create a new [`LiveReloadLayer`] with a custom prefix.
-    pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> LiveReloadLayer {
-        LiveReloadLayer {
+    pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> Self {
+        Self {
             custom_prefix: Some(prefix.into()),
             reloader: Reloader::new(),
         }
