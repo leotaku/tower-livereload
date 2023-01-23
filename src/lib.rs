@@ -115,6 +115,12 @@ impl Reloader {
     }
 }
 
+impl Default for Reloader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer {
@@ -146,6 +152,12 @@ impl LiveReloadLayer {
     /// Return a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
     pub fn reloader(&self) -> Reloader {
         self.reloader.clone()
+    }
+}
+
+impl Default for LiveReloadLayer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
