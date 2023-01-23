@@ -75,7 +75,7 @@
 //! [`Content-Length`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Length
 //! [`Content-Encoding`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
 
-#![forbid(unsafe_code)]
+#![forbid(unsafe_code, unused_unsafe)]
 #![warn(clippy::all, missing_docs, nonstandard_style, future_incompatible)]
 #![allow(clippy::type_complexity)]
 
