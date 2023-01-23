@@ -75,8 +75,9 @@
 //! [`Content-Length`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Length
 //! [`Content-Encoding`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
 
-#![warn(clippy::all, missing_docs, nonstandard_style, future_incompatible)]
 #![forbid(unsafe_code)]
+#![warn(clippy::all, missing_docs, nonstandard_style, future_incompatible)]
+#![allow(clippy::type_complexity)]
 
 mod inject;
 mod long_poll;
