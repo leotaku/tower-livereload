@@ -10,7 +10,7 @@ name = "tower-livereload"
 readme = "README.md"
 repository = "https://github.com/leotaku/tower-livereload"
 rust-version = "1.56.0"
-version = "0.7.2"
+version = "0.7.3-wip"
 
 [lib]
 doctest = false
