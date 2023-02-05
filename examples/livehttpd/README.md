@@ -18,10 +18,10 @@ Livehttpd can be pointed at a directory, which it will then serve locally. Whene
 You can also stop and restart livehttpd, in which case web browsers will reload whenever they can connect to the server again. This may be useful when integrating livehttpd into custom build processes.
 
 ```sh
-# Serve the current directory
 livehttpd .
 ```
 
+Use the above command to serve the current directory.
 Please refer to the help message for additional command-line options.
 
 ## License
