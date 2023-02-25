@@ -1,4 +1,4 @@
-use axum::{http, routing::get_service, Router};
+use axum::{http, Router};
 use clap::Parser;
 use notify::Watcher;
 use tower::layer::util::Stack;
@@ -20,15 +20,6 @@ struct Command {
 
     #[arg(help = "Path to serve as HTTP root")]
     directory: std::path::PathBuf,
-}
-
-fn serve_dir(path: &std::path::Path) -> axum::routing::MethodRouter {
-    get_service(ServeDir::new(path)).handle_error(|error| async move {
-        (
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Unhandled internal error: {}", error),
-        )
-    })
 }
 
 type Srhl = SetResponseHeaderLayer<http::HeaderValue>;
@@ -65,7 +56,7 @@ async fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let livereload = LiveReloadLayer::new();
     let reloader = livereload.reloader();
     let app = Router::new()
-        .nest_service("/", serve_dir(&args.directory))
+        .nest_service("/", ServeDir::new(&args.directory))
         .layer(livereload)
         .layer(no_cache_layer());
 
