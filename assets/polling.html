@@ -1,4 +1,10 @@
 <script type="module">
+  var unloaded = false;
+
+  addEventListener('beforeunload', (event) => {{
+    unloaded = true;
+  }});
+
   const retry = (it) =>
     fetch(it, {{ cache: "no-store" }})
       .then(() => console.log("[tower-livereload] reload..."))
@@ -10,7 +16,7 @@
       .then((it) => it.text().catch(() => null))
       .catch(() => null)
       .then(() => console.log("[tower-livereload] disconnected..."))
-      .then(() => retry("{back_up}"));
+      .then(() => unloaded ? null : retry("{back_up}"));
 
   console.log("[tower-livereload] connected...");
   main();
