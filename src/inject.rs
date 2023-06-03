@@ -7,41 +7,51 @@ use tower::Service;
 use crate::{predicate::Predicate, ready_polyfill::ready};
 
 #[derive(Clone, Debug)]
-pub struct InjectService<S, Pred> {
+pub struct InjectService<S, ReqPred, ResPred> {
     service: S,
     data: Bytes,
-    predicate: Pred,
+    req_predicate: ReqPred,
+    res_predicate: ResPred,
 }
 
-impl<S, Pred> InjectService<S, Pred> {
-    pub fn new(service: S, data: Bytes, predicate: Pred) -> Self {
+impl<S, ReqPred, ResPred> InjectService<S, ReqPred, ResPred> {
+    pub fn new(
+        service: S,
+        data: Bytes,
+        request_predicate: ReqPred,
+        response_predicate: ResPred,
+    ) -> Self {
         Self {
             service,
             data,
-            predicate,
+            req_predicate: request_predicate,
+            res_predicate: response_predicate,
         }
     }
 }
 
-impl<S, Pred, ReqBody, ResBody> Service<Request<ReqBody>> for InjectService<S, Pred>
+impl<S, ReqPred, ResPred, ReqBody, ResBody> Service<Request<ReqBody>>
+    for InjectService<S, ReqPred, ResPred>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
-    Pred: Predicate<Response<ResBody>>,
+    ReqPred: Predicate<Request<ReqBody>>,
+    ResPred: Predicate<Response<ResBody>>,
     ResBody: http_body::Body,
 {
     type Response = Response<InjectBody<ResBody>>;
     type Error = S::Error;
-    type Future = InjectResponseFuture<S::Future, Pred>;
+    type Future = InjectResponseFuture<S::Future, ResPred>;
 
     fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
     fn call(&mut self, request: Request<ReqBody>) -> Self::Future {
+        let should_inject = self.req_predicate.check(&request);
         InjectResponseFuture {
             inner: self.service.call(request),
-            data: Some(self.data.clone()),
-            predicate: self.predicate.clone(),
+            data: should_inject.then(|| self.data.clone()),
+            predicate: self.res_predicate.clone(),
         }
     }
 }

@@ -22,3 +22,21 @@ impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWit
             .unwrap_or(false)
     }
 }
+
+#[derive(Copy, Clone, Debug)]
+pub struct AlwaysPredicate;
+
+impl<T> Predicate<T> for AlwaysPredicate {
+    fn check<'a>(&mut self, _request: &'a T) -> bool {
+        true
+    }
+}
+
+impl<T, F> Predicate<T> for F
+where
+    F: Fn(&T) -> bool + Clone,
+{
+    fn check<'a>(&mut self, request: &'a T) -> bool {
+        (self)(request)
+    }
+}

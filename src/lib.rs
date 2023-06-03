@@ -91,7 +91,7 @@ use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
 use long_poll::LongPollBody;
 use overlay::OverlayService;
-use predicate::ContentTypeStartsWithPredicate;
+use predicate::{AlwaysPredicate, ContentTypeStartsWithPredicate, Predicate};
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
@@ -128,9 +128,10 @@ impl Default for Reloader {
 
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
-pub struct LiveReloadLayer {
+pub struct LiveReloadLayer<ReqPred = AlwaysPredicate> {
     custom_prefix: Option<String>,
     reloader: Reloader,
+    req_predicate: ReqPred,
 }
 
 impl LiveReloadLayer {
@@ -143,6 +144,7 @@ impl LiveReloadLayer {
         Self {
             custom_prefix: None,
             reloader: Reloader::new(),
+            req_predicate: AlwaysPredicate,
         }
     }
 
@@ -151,6 +153,27 @@ impl LiveReloadLayer {
         Self {
             custom_prefix: Some(prefix.into()),
             reloader: Reloader::new(),
+            req_predicate: AlwaysPredicate,
+        }
+    }
+}
+
+impl<ReqPred> LiveReloadLayer<ReqPred> {
+    /// Set a custom predicate for requests that should have their
+    /// response HTML injected with live-reload logic.
+    ///
+    /// Note that these predicates are appled in addition to the
+    /// default response predicates, which make sure that only HTML
+    /// responses are injected.
+    ///
+    /// Also see [`predicate`] for pre-defined predicates and
+    /// [`predicate::Predicate`] for how to implement your own
+    /// predicates.
+    pub fn request_predicate<R, P: Predicate<R>>(self, predicate: P) -> LiveReloadLayer<P> {
+        LiveReloadLayer {
+            custom_prefix: self.custom_prefix,
+            reloader: self.reloader,
+            req_predicate: predicate,
         }
     }
 
@@ -166,13 +189,14 @@ impl Default for LiveReloadLayer {
     }
 }
 
-impl<S> Layer<S> for LiveReloadLayer {
-    type Service = LiveReload<S>;
+impl<S, ReqPred: Clone> Layer<S> for LiveReloadLayer<ReqPred> {
+    type Service = LiveReload<S, ReqPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
         LiveReload::new(
             inner,
             self.reloader.clone(),
+            self.req_predicate.clone(),
             self.custom_prefix
                 .as_ref()
                 .map(|it| it.clone())
@@ -181,25 +205,30 @@ impl<S> Layer<S> for LiveReloadLayer {
     }
 }
 
-type InnerService<S> = OverlayService<
+type InnerService<S, ReqPred> = OverlayService<
     String,
     Infallible,
     OverlayService<
         LongPollBody,
         Infallible,
-        InjectService<S, ContentTypeStartsWithPredicate<&'static str>>,
+        InjectService<S, ReqPred, ContentTypeStartsWithPredicate<&'static str>>,
     >,
 >;
 
 /// Middleware to enable LiveReload functionality.
 #[derive(Clone, Debug)]
-pub struct LiveReload<S> {
-    service: InnerService<S>,
+pub struct LiveReload<S, ReqPred = AlwaysPredicate> {
+    service: InnerService<S, ReqPred>,
 }
 
-impl<S> LiveReload<S> {
+impl<S, ReqPred> LiveReload<S, ReqPred> {
     /// Create a new [`LiveReload`] middleware.
-    pub fn new<P: Into<String>>(service: S, reloader: Reloader, prefix: P) -> Self {
+    pub fn new<P: Into<String>>(
+        service: S,
+        reloader: Reloader,
+        req_predicate: ReqPred,
+        prefix: P,
+    ) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let back_up_path = format!("{}/back-up", prefix);
@@ -211,6 +240,7 @@ impl<S> LiveReload<S> {
                 back_up = back_up_path,
             )
             .into(),
+            req_predicate,
             ContentTypeStartsWithPredicate::new("text/html"),
         );
         let overlay_poll = OverlayService::new(inject).path(long_poll_path, move || {
@@ -234,14 +264,15 @@ impl<S> LiveReload<S> {
     }
 }
 
-impl<ReqBody, ResBody, S> Service<Request<ReqBody>> for LiveReload<S>
+impl<ReqBody, ResBody, S, ReqPred> Service<Request<ReqBody>> for LiveReload<S, ReqPred>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
     ResBody: http_body::Body,
+    ReqPred: Predicate<Request<ReqBody>>,
 {
-    type Response = <InnerService<S> as Service<Request<ReqBody>>>::Response;
-    type Error = <InnerService<S> as Service<Request<ReqBody>>>::Error;
-    type Future = <InnerService<S> as Service<Request<ReqBody>>>::Future;
+    type Response = <InnerService<S, ReqPred> as Service<Request<ReqBody>>>::Response;
+    type Error = <InnerService<S, ReqPred> as Service<Request<ReqBody>>>::Error;
+    type Future = <InnerService<S, ReqPred> as Service<Request<ReqBody>>>::Future;
 
     fn poll_ready(
         &mut self,
