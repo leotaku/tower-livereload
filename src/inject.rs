@@ -40,7 +40,7 @@ where
     fn call(&mut self, request: Request<ReqBody>) -> Self::Future {
         InjectResponseFuture {
             inner: self.service.call(request),
-            data: self.data.clone(),
+            data: Some(self.data.clone()),
             predicate: self.predicate.clone(),
         }
     }
@@ -50,7 +50,7 @@ pin_project_lite::pin_project! {
     pub struct InjectResponseFuture<F, Pred> {
         #[pin]
         inner: F,
-        data: Bytes,
+        data: Option<Bytes>,
         predicate: Pred,
     }
 }
@@ -66,6 +66,17 @@ where
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         let response = ready!(this.inner.poll(cx)?);
+
+        let data = match this.data {
+            Some(data) => data,
+            None => {
+                let (parts, body) = response.into_parts();
+                return Poll::Ready(Ok(Response::from_parts(
+                    parts,
+                    InjectBody { body, inject: None },
+                )));
+            }
+        };
 
         let content_length: Option<usize> = this
             .predicate
@@ -85,11 +96,10 @@ where
 
         let (mut parts, body) = response.into_parts();
         let inject = if let Some(length) = content_length {
-            parts.headers.insert(
-                header::CONTENT_LENGTH,
-                (length + this.data.remaining()).into(),
-            );
-            Some(this.data.clone())
+            parts
+                .headers
+                .insert(header::CONTENT_LENGTH, (length + data.remaining()).into());
+            this.data.take()
         } else {
             None
         };
