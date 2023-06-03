@@ -172,16 +172,15 @@ impl<ReqPred> LiveReloadLayer<ReqPred> {
         }
     }
 
-    /// Set a custom predicate for requests that should have their
-    /// response HTML injected with live-reload logic.
+    /// Set a custom predicate for requests that should have their response HTML
+    /// injected with live-reload logic.
     ///
-    /// Note that these predicates are appled in addition to the
-    /// default response predicates, which make sure that only HTML
-    /// responses are injected.
+    /// Note that these predicates are appled in addition to the default
+    /// response predicates, which make sure that only HTML responses are
+    /// injected.
     ///
     /// Also see [`predicate`] for pre-defined predicates and
-    /// [`predicate::Predicate`] for how to implement your own
-    /// predicates.
+    /// [`predicate::Predicate`] for how to implement your own predicates.
     pub fn request_predicate<R, P: Predicate<R>>(self, predicate: P) -> LiveReloadLayer<P> {
         LiveReloadLayer {
             custom_prefix: self.custom_prefix,
