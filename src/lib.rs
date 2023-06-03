@@ -132,8 +132,8 @@ pub struct LiveReloadLayer {
 }
 
 impl LiveReloadLayer {
-    /// Create a new [`LiveReloadLayer`] with the default prefix for our own
-    /// assets.
+    /// Create a new [`LiveReloadLayer`] with the default prefix for internal
+    /// routes.
     ///
     /// The default prefix is deliberately long and specific to avoid any
     /// accidental collisions with the wrapped service.
