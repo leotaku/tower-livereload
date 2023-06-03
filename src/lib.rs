@@ -95,6 +95,8 @@ use predicate::ContentTypeStartsWithPredicate;
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
+const DEFAULT_PREFIX: &str = "/tower-livereload/long-name-to-avoid-collisions";
+
 /// Utility to send reload requests to clients.
 #[derive(Clone, Debug)]
 pub struct Reloader {
@@ -174,7 +176,7 @@ impl<S> Layer<S> for LiveReloadLayer {
             self.custom_prefix
                 .as_ref()
                 .map(|it| it.clone())
-                .unwrap_or_else(|| "/tower-livereload/long-name-to-avoid-collisions".to_owned()),
+                .unwrap_or_else(|| DEFAULT_PREFIX.to_owned()),
         )
     }
 }
