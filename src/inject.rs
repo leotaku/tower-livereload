@@ -41,7 +41,7 @@ where
         InjectResponseFuture {
             inner: self.service.call(request),
             data: self.data.clone(),
-            predicate: self.predicate,
+            predicate: self.predicate.clone(),
         }
     }
 }
@@ -70,8 +70,7 @@ where
         let content_length: Option<usize> = this
             .predicate
             .check(&response)
-            .ok()
-            .and_then(|_| {
+            .then(|| {
                 response
                     .headers()
                     .get(header::CONTENT_ENCODING)
