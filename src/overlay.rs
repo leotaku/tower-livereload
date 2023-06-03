@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt::Display, future::Future, sync::Arc, task::Poll};
+use std::{
+    collections::HashMap, convert::Infallible, fmt::Display, future::Future, sync::Arc, task::Poll,
+};
 
 use bytes::Buf;
 use http::{Request, Response};
@@ -69,14 +71,14 @@ where
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
 {
     type Response = Response<OverlayBody<ResBodyNew, ResBody>>;
-    type Error = S::Error;
+    type Error = OverlayError<E, S::Error>;
     type Future = OverlayFuture<ResBodyNew, E, S::Future>;
 
     fn poll_ready(
         &mut self,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
-        self.service.poll_ready(cx)
+        self.service.poll_ready(cx).map_err(OverlayError::B)
     }
 
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
@@ -107,18 +109,22 @@ impl<B, E, PB, PE, F> Future for OverlayFuture<B, E, F>
 where
     F: Future<Output = Result<Response<PB>, PE>>,
 {
-    type Output = Result<Response<OverlayBody<B, PB>>, PE>;
+    type Output = Result<Response<OverlayBody<B, PB>>, OverlayError<E, PE>>;
 
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         if let Some(resp) = this.response.take() {
             Poll::Ready(
                 resp.map(|ok| ok.map(|a| OverlayBody::A { a }))
-                    .or_else(|_| panic!()),
+                    .map_err(OverlayError::A),
             )
         } else {
             let polled = ready!(this.inner.poll(cx));
-            Poll::Ready(polled.map(|resp| resp.map(|b| OverlayBody::B { b })))
+            Poll::Ready(
+                polled
+                    .map(|resp| resp.map(|b| OverlayBody::B { b }))
+                    .map_err(OverlayError::B),
+            )
         }
     }
 }
@@ -181,6 +187,19 @@ impl<A: Display, B: Display> Display for OverlayError<A, B> {
         match self {
             OverlayError::A(a) => a.fmt(f),
             OverlayError::B(b) => b.fmt(f),
+        }
+    }
+}
+
+impl<A, B> From<OverlayError<A, B>> for Infallible
+where
+    A: Into<Infallible>,
+    B: Into<Infallible>,
+{
+    fn from(value: OverlayError<A, B>) -> Self {
+        match value {
+            OverlayError::A(a) => a.into(),
+            OverlayError::B(b) => b.into(),
         }
     }
 }

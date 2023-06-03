@@ -85,6 +85,8 @@ mod overlay;
 mod predicate;
 mod ready_polyfill;
 
+use std::convert::Infallible;
+
 use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
 use long_poll::LongPollBody;
@@ -176,10 +178,10 @@ impl<S> Layer<S> for LiveReloadLayer {
 
 type InnerService<S> = OverlayService<
     String,
-    http::Error,
+    Infallible,
     OverlayService<
         LongPollBody,
-        http::Error,
+        Infallible,
         InjectService<S, ContentTypeStartsWithPredicate<&'static str>>,
     >,
 >;
@@ -224,12 +226,14 @@ impl<S> LiveReload<S> {
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/event-stream")
                 .body(LongPollBody::new(reloader.sender.subscribe()))
+                .map_err(|_| unreachable!())
         });
         let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body("Ok".to_owned())
+                .map_err(|_| unreachable!())
         });
 
         LiveReload {
