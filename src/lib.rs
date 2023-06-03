@@ -168,11 +168,14 @@ impl<S> Layer<S> for LiveReloadLayer {
     type Service = LiveReload<S>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        if let Some(ref custom_prefix) = self.custom_prefix {
-            LiveReload::with_custom_prefix(inner, self.reloader.clone(), custom_prefix.clone())
-        } else {
-            LiveReload::new(inner, self.reloader.clone())
-        }
+        LiveReload::new(
+            inner,
+            self.reloader.clone(),
+            self.custom_prefix
+                .as_ref()
+                .map(|it| it.clone())
+                .unwrap_or_else(|| "/tower-livereload/long-name-to-avoid-collisions".to_owned()),
+        )
     }
 }
 
@@ -193,21 +196,8 @@ pub struct LiveReload<S> {
 }
 
 impl<S> LiveReload<S> {
-    /// Create a new [`LiveReload`] middleware with the default prefix
-    /// for our own assets.
-    ///
-    /// The default prefix is deliberately long and specific to avoid
-    /// any accidental collisions with the wrapped service.
-    pub fn new(service: S, reloader: Reloader) -> Self {
-        Self::with_custom_prefix(
-            service,
-            reloader,
-            "/tower-livereload/long-name-to-avoid-collisions",
-        )
-    }
-
-    /// Create a new [`LiveReload`] middleware with a custom prefix.
-    pub fn with_custom_prefix<P: Into<String>>(service: S, reloader: Reloader, prefix: P) -> Self {
+    /// Create a new [`LiveReload`] middleware.
+    pub fn new<P: Into<String>>(service: S, reloader: Reloader, prefix: P) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
         let back_up_path = format!("{}/back-up", prefix);
