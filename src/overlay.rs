@@ -7,8 +7,6 @@ use http::{Request, Response};
 use http_body::Body;
 use tower::Service;
 
-use crate::ready_polyfill::ready;
-
 pub struct OverlayService<B, E, S> {
     map: HashMap<String, Arc<dyn Fn() -> Result<Response<B>, E> + Send + Sync>>,
     service: S,
@@ -119,12 +117,10 @@ where
                     .map_err(OverlayError::A),
             )
         } else {
-            let polled = ready!(this.inner.poll(cx));
-            Poll::Ready(
-                polled
-                    .map(|resp| resp.map(|b| OverlayBody::B { b }))
-                    .map_err(OverlayError::B),
-            )
+            this.inner
+                .poll(cx)
+                .map_ok(|resp| resp.map(|b| OverlayBody::B { b }))
+                .map_err(OverlayError::B)
         }
     }
 }
@@ -146,16 +142,8 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
         match self.project() {
-            OverlayBodyProj::A { a } => match ready!(a.poll_data(cx)) {
-                Some(Ok(ok)) => Poll::Ready(Some(Ok(ok))),
-                Some(Err(err)) => Poll::Ready(Some(Err(OverlayError::A(err)))),
-                None => Poll::Ready(None),
-            },
-            OverlayBodyProj::B { b } => match ready!(b.poll_data(cx)) {
-                Some(Ok(ok)) => Poll::Ready(Some(Ok(ok))),
-                Some(Err(err)) => Poll::Ready(Some(Err(OverlayError::B(err)))),
-                None => Poll::Ready(None),
-            },
+            OverlayBodyProj::A { a } => a.poll_data(cx).map_err(OverlayError::A),
+            OverlayBodyProj::B { b } => b.poll_data(cx).map_err(OverlayError::B),
         }
     }
 
@@ -164,12 +152,8 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
         match self.project() {
-            OverlayBodyProj::A { a } => {
-                Poll::Ready(Ok(ready!(a.poll_trailers(cx)).map_err(OverlayError::A)?))
-            }
-            OverlayBodyProj::B { b } => {
-                Poll::Ready(Ok(ready!(b.poll_trailers(cx)).map_err(OverlayError::B)?))
-            }
+            OverlayBodyProj::A { a } => a.poll_trailers(cx).map_err(OverlayError::A),
+            OverlayBodyProj::B { b } => b.poll_trailers(cx).map_err(OverlayError::B),
         }
     }
 }
