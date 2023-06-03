@@ -149,6 +149,10 @@ impl LiveReloadLayer {
     }
 
     /// Create a new [`LiveReloadLayer`] with a custom prefix.
+    #[deprecated(
+        since = "0.8.0",
+        note = "please use `LiveReloadLayer::new` and `custom_prefix` instead"
+    )]
     pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> Self {
         Self {
             custom_prefix: Some(prefix.into()),
@@ -159,6 +163,15 @@ impl LiveReloadLayer {
 }
 
 impl<ReqPred> LiveReloadLayer<ReqPred> {
+    /// Set a custom prefix for internal routes for the given
+    /// [`LiveReloadLayer`].
+    pub fn custom_prefix<P: Into<String>>(self, prefix: P) -> Self {
+        Self {
+            custom_prefix: Some(prefix.into()),
+            ..self
+        }
+    }
+
     /// Set a custom predicate for requests that should have their
     /// response HTML injected with live-reload logic.
     ///
