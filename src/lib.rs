@@ -106,7 +106,7 @@ pub struct Reloader {
 impl Reloader {
     /// Create a new [`Reloader`].
     ///
-    /// This can be manually passed to the [`LiveReload`] constructors, but in
+    /// This can be manually passed to the [`LiveReload`] constructor, but in
     /// most cases the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`]
     /// utilities are preferred.
     pub fn new() -> Self {
@@ -177,7 +177,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     /// injected with live-reload logic.
     ///
     /// Note that this predicate is appled in addition to the default response
-    /// predicates, which make sure that only HTML responses are injected.
+    /// predicate, which makes sure that only HTML responses are injected.
     ///
     /// Also see [`predicate`] for pre-defined predicates and
     /// [`predicate::Predicate`] for how to implement your own predicates.
