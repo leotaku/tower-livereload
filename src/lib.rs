@@ -181,7 +181,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     ///
     /// Also see [`predicate`] for pre-defined predicates and
     /// [`predicate::Predicate`] for how to implement your own predicates.
-    pub fn request_predicate<R, P: Predicate<R>>(
+    pub fn request_predicate<Body, P: Predicate<Request<Body>>>(
         self,
         predicate: P,
     ) -> LiveReloadLayer<P, ResPred> {
@@ -207,7 +207,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     ///
     /// [`Content-Length`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Length
     /// [`Content-Encoding`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
-    pub fn response_predicate<R, P: Predicate<R>>(
+    pub fn response_predicate<Body, P: Predicate<Response<Body>>>(
         self,
         predicate: P,
     ) -> LiveReloadLayer<ReqPred, P> {
