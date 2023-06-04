@@ -39,7 +39,7 @@ impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWit
 pub struct AlwaysPredicate;
 
 impl<T> Predicate<T> for AlwaysPredicate {
-    fn check<'a>(&mut self, _request: &'a T) -> bool {
+    fn check(&mut self, _request: &T) -> bool {
         true
     }
 }
@@ -48,7 +48,7 @@ impl<T, F> Predicate<T> for F
 where
     F: Fn(&T) -> bool + Copy,
 {
-    fn check<'a>(&mut self, request: &'a T) -> bool {
+    fn check(&mut self, request: &T) -> bool {
         (self)(request)
     }
 }
