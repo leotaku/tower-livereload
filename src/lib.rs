@@ -159,12 +159,7 @@ impl LiveReloadLayer {
         note = "please use `LiveReloadLayer::new` and `custom_prefix` instead"
     )]
     pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> Self {
-        Self {
-            custom_prefix: Some(prefix.into()),
-            reloader: Reloader::new(),
-            req_predicate: AlwaysPredicate,
-            res_predicate: ContentTypeStartsWithPredicate::new("text/html"),
-        }
+        Self::new().custom_prefix(prefix)
     }
 }
 
