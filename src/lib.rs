@@ -231,8 +231,8 @@ impl Default for LiveReloadLayer {
     }
 }
 
-impl<S, ReqPred: Clone> Layer<S> for LiveReloadLayer<ReqPred> {
-    type Service = LiveReload<S, ReqPred>;
+impl<S, ReqPred: Clone, ResPred: Clone> Layer<S> for LiveReloadLayer<ReqPred, ResPred> {
+    type Service = LiveReload<S, ReqPred, ResPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
         LiveReload::new(
