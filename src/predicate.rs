@@ -14,7 +14,7 @@ impl<Patt: AsRef<str> + Copy> ContentTypeStartsWithPredicate<Patt> {
 }
 
 impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWithPredicate<Patt> {
-    fn check<'a>(&mut self, response: &'a Response<T>) -> bool {
+    fn check(&mut self, response: &Response<T>) -> bool {
         response
             .headers()
             .get(header::CONTENT_TYPE)
