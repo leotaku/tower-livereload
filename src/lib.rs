@@ -82,7 +82,7 @@
 mod inject;
 mod long_poll;
 mod overlay;
-mod predicate;
+pub mod predicate;
 mod ready_polyfill;
 
 use std::convert::Infallible;
