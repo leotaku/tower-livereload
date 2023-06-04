@@ -6,7 +6,7 @@
 use http::{header, Response};
 
 /// Trait for predicates that check if a value matches them.
-pub trait Predicate<T>: Clone {
+pub trait Predicate<T>: Copy {
     /// Check if the predicate matches the given value.
     fn check(&mut self, thing: &T) -> bool;
 }
@@ -46,7 +46,7 @@ impl<T> Predicate<T> for AlwaysPredicate {
 
 impl<T, F> Predicate<T> for F
 where
-    F: Fn(&T) -> bool + Clone,
+    F: Fn(&T) -> bool + Copy,
 {
     fn check<'a>(&mut self, request: &'a T) -> bool {
         (self)(request)

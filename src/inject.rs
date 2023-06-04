@@ -51,7 +51,7 @@ where
         InjectResponseFuture {
             inner: self.service.call(request),
             data: should_inject.then(|| self.data.clone()),
-            predicate: self.res_predicate.clone(),
+            predicate: self.res_predicate,
         }
     }
 }

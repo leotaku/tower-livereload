@@ -231,15 +231,15 @@ impl Default for LiveReloadLayer {
     }
 }
 
-impl<S, ReqPred: Clone, ResPred: Clone> Layer<S> for LiveReloadLayer<ReqPred, ResPred> {
+impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResPred> {
     type Service = LiveReload<S, ReqPred, ResPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
         LiveReload::new(
             inner,
             self.reloader.clone(),
-            self.req_predicate.clone(),
-            self.res_predicate.clone(),
+            self.req_predicate,
+            self.res_predicate,
             self.custom_prefix
                 .as_ref()
                 .map(|it| it.clone())
