@@ -242,10 +242,10 @@ impl<S> LiveReload<S> {
     }
 }
 
-impl<ReqBody, RespBody, S> Service<Request<ReqBody>> for LiveReload<S>
+impl<ReqBody, ResBody, S> Service<Request<ReqBody>> for LiveReload<S>
 where
-    S: Service<Request<ReqBody>, Response = Response<RespBody>>,
-    RespBody: http_body::Body,
+    S: Service<Request<ReqBody>, Response = Response<ResBody>>,
+    ResBody: http_body::Body,
 {
     type Response = <InnerService<S> as Service<Request<ReqBody>>>::Response;
     type Error = <InnerService<S> as Service<Request<ReqBody>>>::Error;
