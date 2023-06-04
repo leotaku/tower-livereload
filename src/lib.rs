@@ -91,7 +91,7 @@ use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
 use long_poll::LongPollBody;
 use overlay::OverlayService;
-use predicate::{AlwaysPredicate, ContentTypeStartsWithPredicate, Predicate};
+use predicate::{Always, ContentTypeStartsWith, Predicate};
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
@@ -129,8 +129,8 @@ impl Default for Reloader {
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
 pub struct LiveReloadLayer<
-    ReqPred = AlwaysPredicate,
-    ResPred = ContentTypeStartsWithPredicate<&'static str>,
+    ReqPred = Always,
+    ResPred = ContentTypeStartsWith<&'static str>,
 > {
     custom_prefix: Option<String>,
     reloader: Reloader,
@@ -148,8 +148,8 @@ impl LiveReloadLayer {
         Self {
             custom_prefix: None,
             reloader: Reloader::new(),
-            req_predicate: AlwaysPredicate,
-            res_predicate: ContentTypeStartsWithPredicate::new("text/html"),
+            req_predicate: Always,
+            res_predicate: ContentTypeStartsWith::new("text/html"),
         }
     }
 
@@ -258,8 +258,8 @@ type InnerService<S, ReqPred, ResPred> = OverlayService<
 #[derive(Clone, Debug)]
 pub struct LiveReload<
     S,
-    ReqPred = AlwaysPredicate,
-    ResPred = ContentTypeStartsWithPredicate<&'static str>,
+    ReqPred = Always,
+    ResPred = ContentTypeStartsWith<&'static str>,
 > {
     service: InnerService<S, ReqPred, ResPred>,
 }

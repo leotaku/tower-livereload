@@ -15,16 +15,16 @@ pub trait Predicate<T>: Copy {
 ///
 /// [`Content-Type`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
 #[derive(Copy, Clone, Debug)]
-pub struct ContentTypeStartsWithPredicate<Patt>(Patt);
+pub struct ContentTypeStartsWith<Patt>(Patt);
 
-impl<Patt: AsRef<str> + Copy> ContentTypeStartsWithPredicate<Patt> {
-    /// Create a new [`ContentTypeStartsWithPredicate`] predicate.
+impl<Patt: AsRef<str> + Copy> ContentTypeStartsWith<Patt> {
+    /// Create a new [`ContentTypeStartsWith`] predicate.
     pub fn new(pattern: Patt) -> Self {
-        ContentTypeStartsWithPredicate(pattern)
+        ContentTypeStartsWith(pattern)
     }
 }
 
-impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWithPredicate<Patt> {
+impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWith<Patt> {
     fn check(&mut self, response: &Response<T>) -> bool {
         response
             .headers()
@@ -36,10 +36,10 @@ impl<T, Patt: AsRef<str> + Copy> Predicate<Response<T>> for ContentTypeStartsWit
 
 /// A predicate that matches any request or response.
 #[derive(Copy, Clone, Debug)]
-pub struct AlwaysPredicate;
+pub struct Always;
 
-impl<T> Predicate<T> for AlwaysPredicate {
-    fn check(&mut self, _request: &T) -> bool {
+impl<T> Predicate<T> for Always {
+    fn check(&mut self, _thing: &T) -> bool {
         true
     }
 }
@@ -48,7 +48,7 @@ impl<T, F> Predicate<T> for F
 where
     F: Fn(&T) -> bool + Copy,
 {
-    fn check(&mut self, request: &T) -> bool {
-        (self)(request)
+    fn check(&mut self, thing: &T) -> bool {
+        (self)(thing)
     }
 }
