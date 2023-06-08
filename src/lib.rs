@@ -128,10 +128,7 @@ impl Default for Reloader {
 
 /// Layer to apply [`LiveReload`] middleware.
 #[derive(Clone, Debug)]
-pub struct LiveReloadLayer<
-    ReqPred = Always,
-    ResPred = ContentTypeStartsWith<&'static str>,
-> {
+pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'static str>> {
     custom_prefix: Option<String>,
     reloader: Reloader,
     req_predicate: ReqPred,
@@ -256,11 +253,7 @@ type InnerService<S, ReqPred, ResPred> = OverlayService<
 
 /// Middleware to enable LiveReload functionality.
 #[derive(Clone, Debug)]
-pub struct LiveReload<
-    S,
-    ReqPred = Always,
-    ResPred = ContentTypeStartsWith<&'static str>,
-> {
+pub struct LiveReload<S, ReqPred = Always, ResPred = ContentTypeStartsWith<&'static str>> {
     service: InnerService<S, ReqPred, ResPred>,
 }
 
