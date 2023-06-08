@@ -196,8 +196,8 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     /// Set a custom predicate for responses that should be injected with
     /// live-reload logic.
     ///
-    /// Note that this predicate is appled instead to the default response
-    /// predicates, which would make sure that only HTML responses are injected.
+    /// Note that this predicate is appled instead of the default response
+    /// predicate, which would make sure that only HTML responses are injected.
     /// However, even with a custom predicate only responses that have a valid
     /// [`Content-Length`] header, and no [`Content-Encoding`] header can and
     /// will be injected.
