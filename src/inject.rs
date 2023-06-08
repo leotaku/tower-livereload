@@ -15,17 +15,12 @@ pub struct InjectService<S, ReqPred, ResPred> {
 }
 
 impl<S, ReqPred, ResPred> InjectService<S, ReqPred, ResPred> {
-    pub fn new(
-        service: S,
-        data: Bytes,
-        request_predicate: ReqPred,
-        response_predicate: ResPred,
-    ) -> Self {
+    pub fn new(service: S, data: Bytes, req_predicate: ReqPred, res_predicate: ResPred) -> Self {
         Self {
             service,
             data,
-            req_predicate: request_predicate,
-            res_predicate: response_predicate,
+            req_predicate,
+            res_predicate,
         }
     }
 }
