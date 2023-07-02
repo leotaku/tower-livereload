@@ -220,7 +220,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
         }
     }
 
-    /// Set a custom interval for the live-reload logic.
+    /// Set a custom retry interval for the live-reload logic.
     pub fn reload_interval(self, interval: Duration) -> Self {
         Self {
             reload_interval: interval,
