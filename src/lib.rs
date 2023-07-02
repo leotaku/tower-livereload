@@ -249,11 +249,11 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
             self.reloader.clone(),
             self.req_predicate,
             self.res_predicate,
+            self.reload_interval,
             self.custom_prefix
                 .as_ref()
                 .cloned()
                 .unwrap_or_else(|| DEFAULT_PREFIX.to_owned()),
-            self.reload_interval,
         )
     }
 }
@@ -277,8 +277,8 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         reloader: Reloader,
         req_predicate: ReqPred,
         res_predicate: ResPred,
-        prefix: P,
         reload_interval: Duration,
+        prefix: P,
     ) -> Self {
         let prefix = prefix.into();
         let long_poll_path = format!("{}/long-poll", prefix);
