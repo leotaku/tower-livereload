@@ -287,9 +287,9 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
             service,
             format!(
                 include_str!("../assets/polling.html"),
-                reload_interval = reload_interval.as_millis(),
                 long_poll = long_poll_path,
                 back_up = back_up_path,
+                reload_interval = reload_interval.as_millis(),
             )
             .into(),
             req_predicate,
