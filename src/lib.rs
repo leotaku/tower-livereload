@@ -220,17 +220,17 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
         }
     }
 
-    /// Return a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
-    pub fn reloader(&self) -> Reloader {
-        self.reloader.clone()
-    }
-
     /// Set a custom interval for the live-reload logic.
     pub fn reload_interval(self, interval: Duration) -> Self {
         Self {
             reload_interval: interval,
             ..self
         }
+    }
+
+    /// Return a manual [`Reloader`] trigger for the given [`LiveReloadLayer`].
+    pub fn reloader(&self) -> Reloader {
+        self.reloader.clone()
     }
 }
 
