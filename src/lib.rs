@@ -85,7 +85,7 @@ mod overlay;
 pub mod predicate;
 mod ready_polyfill;
 
-use std::convert::Infallible;
+use std::{convert::Infallible, time::Duration};
 
 use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
@@ -133,6 +133,7 @@ pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'s
     reloader: Reloader,
     req_predicate: ReqPred,
     res_predicate: ResPred,
+    reload_interval: Duration,
 }
 
 impl LiveReloadLayer {
@@ -147,6 +148,7 @@ impl LiveReloadLayer {
             reloader: Reloader::new(),
             req_predicate: Always,
             res_predicate: ContentTypeStartsWith::new("text/html"),
+            reload_interval: Duration::from_secs(1),
         }
     }
 
@@ -187,6 +189,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
             reloader: self.reloader,
             req_predicate: predicate,
             res_predicate: self.res_predicate,
+            reload_interval: self.reload_interval,
         }
     }
 
@@ -213,6 +216,15 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
             reloader: self.reloader,
             req_predicate: self.req_predicate,
             res_predicate: predicate,
+            reload_interval: self.reload_interval,
+        }
+    }
+
+    /// Set a custom retry interval for the live-reload logic.
+    pub fn reload_interval(self, interval: Duration) -> Self {
+        Self {
+            reload_interval: interval,
+            ..self
         }
     }
 
@@ -237,6 +249,7 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
             self.reloader.clone(),
             self.req_predicate,
             self.res_predicate,
+            self.reload_interval,
             self.custom_prefix
                 .as_ref()
                 .cloned()
@@ -264,6 +277,7 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         reloader: Reloader,
         req_predicate: ReqPred,
         res_predicate: ResPred,
+        reload_interval: Duration,
         prefix: P,
     ) -> Self {
         let prefix = prefix.into();
@@ -275,6 +289,7 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
                 include_str!("../assets/polling.html"),
                 long_poll = long_poll_path,
                 back_up = back_up_path,
+                reload_interval = reload_interval.as_millis(),
             )
             .into(),
             req_predicate,

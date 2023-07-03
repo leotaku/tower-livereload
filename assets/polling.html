@@ -9,7 +9,7 @@
     fetch(it, {{ cache: "no-store" }})
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
-      .catch(() => setTimeout(() => retry(it), 1000));
+      .catch(() => setTimeout(() => retry(it), {reload_interval}));
 
   const main = async () =>
     fetch("{long_poll}", {{ cache: "no-store" }})
