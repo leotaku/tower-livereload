@@ -5,15 +5,15 @@
     unloaded = true;
   }});
 
-  const retry = (it) =>
-    fetch(it, {{ cache: "no-store" }})
+  const retry = (url) =>
+    fetch(url, {{ cache: "no-store" }})
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
-      .catch(() => setTimeout(() => retry(it), {reload_interval}));
+      .catch(() => setTimeout(() => retry(url), {reload_interval}));
 
   const main = async () =>
     fetch("{long_poll}", {{ cache: "no-store" }})
-      .then((it) => it.text().catch(() => null))
+      .then((rsp) => rsp.text().catch(() => null))
       .catch(() => null)
       .then(() => console.log("[tower-livereload] disconnected..."))
       .then(() => unloaded ? null : retry("{back_up}"));
