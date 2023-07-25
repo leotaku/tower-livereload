@@ -11,9 +11,9 @@
       .then(() => window.location.reload())
       .catch(() => setTimeout(() => retry(url), {reload_interval}));
 
-  const main = async () =>
+  const main = () =>
     fetch("{long_poll}", {{ cache: "no-store" }})
-      .then((rsp) => rsp.text().catch(() => null))
+      .then((rsp) => rsp.text())
       .catch(() => null)
       .then(() => console.log("[tower-livereload] disconnected..."))
       .then(() => unloaded ? null : retry("{back_up}"));
