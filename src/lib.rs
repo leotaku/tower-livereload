@@ -106,9 +106,9 @@ pub struct Reloader {
 impl Reloader {
     /// Create a new [`Reloader`].
     ///
-    /// This can be manually passed to the [`LiveReload`] constructor, but in
-    /// most cases the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`]
-    /// utilities are preferred.
+    /// You should never have to directly call this constructor. Instead, use
+    /// the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`] utilities to
+    /// construct a [`LiveReload`] middleware with an associated [`Reloader`].
     pub fn new() -> Self {
         let (sender, _) = tokio::sync::broadcast::channel(1);
         Self { sender }
