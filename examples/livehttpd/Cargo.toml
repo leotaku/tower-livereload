@@ -15,7 +15,7 @@ version = "1.0.6-wip"
 axum = "0.6.20"
 clap = { version = "4.4.3", features = ["derive"] }
 notify = "6.1.1"
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync", "rt"] }
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 tower = "0.4.13"
 tower-http = { version = "0.4.4", features = ["fs", "set-header"] }
 tower-livereload = { version = "0.8.2-wip", path = "../.." }
