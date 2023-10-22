@@ -1,5 +1,5 @@
 [package]
-name = "axum-in-process"
+name = "axum-file-watch"
 version = "0.1.0"
 edition = "2021"
 

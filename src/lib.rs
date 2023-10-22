@@ -39,7 +39,7 @@
 //! entirely using hooks from Rust code. See this [example] on GitHub for
 //! pointers on how to implement a self-contained live-reloading static server.
 //!
-//! [example]: https://github.com/leotaku/tower-livereload/blob/master/examples/axum-in-process/
+//! [example]: https://github.com/leotaku/tower-livereload/blob/master/examples/axum-file-watch/
 //!
 //! # Ecosystem compatibility
 //!
