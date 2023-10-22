@@ -15,11 +15,11 @@
 [librs-badge]: https://img.shields.io/badge/lib.rs-linked-informational
 [docs-badge]: https://img.shields.io/docsrs/tower-livereload
 
-A middleware for browser reloading, built on top of [tower].
+A middleware for browser reloading, built on top of [`tower`].
 
 ## Example
 
-Note that [axum] is only used as an example here, pretty much any Rust HTTP
+Note that [`axum`] is only used as an example here, pretty much any Rust HTTP
 library or framework will be compatible!
 
 ```rust
@@ -40,15 +40,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-If you continuously rebuild and rerun this example e.g. using [watchexec],
+If you continuously rebuild and rerun this example e.g. using [`watchexec`],
 you should see your browser reload whenever the code is changed.
 
 More examples can be found on GitHub under [examples].
 
-[axum]: https://docs.rs/axum
-[tower]: https://docs.rs/tower
+[`axum`]: https://docs.rs/axum
+[`tower`]: https://docs.rs/tower
+[`watchexec`]: https://watchexec.github.io/
 [examples]: https://github.com/leotaku/tower-livereload/tree/master/examples
-[watchexec]: https://watchexec.github.io/
 
 ## Manual reload
 
