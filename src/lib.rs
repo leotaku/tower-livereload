@@ -244,6 +244,7 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
     type Service = LiveReload<S, ReqPred, ResPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
+        #[allow(deprecated)]
         LiveReload::new(
             inner,
             self.reloader.clone(),
@@ -271,6 +272,10 @@ pub struct LiveReload<S, ReqPred = Always, ResPred = ContentTypeStartsWith<&'sta
 }
 
 impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
+    #[deprecated(
+        since = "0.9.0",
+        note = "please use `LiveReloadLayer::new().layer(service)` instead"
+    )]
     /// Create a new [`LiveReload`] middleware.
     pub fn new<P: Into<String>>(
         service: S,
