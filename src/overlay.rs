@@ -4,7 +4,7 @@ use std::{
 
 use bytes::Buf;
 use http::{Request, Response};
-use http_body::Body;
+use http_body::{Body, Frame};
 use tower::Service;
 
 pub struct OverlayService<B, E, S> {
@@ -137,23 +137,13 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
     type Data = Data;
     type Error = OverlayError<A::Error, B::Error>;
 
-    fn poll_data(
+    fn poll_frame(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
-    ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
+    ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
         match self.project() {
-            OverlayBodyProj::A { a } => a.poll_data(cx).map_err(OverlayError::A),
-            OverlayBodyProj::B { b } => b.poll_data(cx).map_err(OverlayError::B),
-        }
-    }
-
-    fn poll_trailers(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
-        match self.project() {
-            OverlayBodyProj::A { a } => a.poll_trailers(cx).map_err(OverlayError::A),
-            OverlayBodyProj::B { b } => b.poll_trailers(cx).map_err(OverlayError::B),
+            OverlayBodyProj::A { a } => a.poll_frame(cx).map_err(OverlayError::A),
+            OverlayBodyProj::B { b } => b.poll_frame(cx).map_err(OverlayError::B),
         }
     }
 }

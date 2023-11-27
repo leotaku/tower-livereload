@@ -2,6 +2,7 @@ use std::{future::Future, task::Poll};
 
 use bytes::{Buf, Bytes};
 use http::{header, Request, Response};
+use http_body::Frame;
 use tower::Service;
 
 use crate::{predicate::Predicate, ready_polyfill::ready};
@@ -125,28 +126,21 @@ impl<B: http_body::Body> http_body::Body for InjectBody<B> {
     type Data = Bytes;
     type Error = B::Error;
 
-    fn poll_data(
+    fn poll_frame(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
-    ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
+    ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
         let this = self.project();
         let poll = ready!(this
             .body
-            .poll_data(cx)
-            .map_ok(|mut chunk| chunk.copy_to_bytes(chunk.remaining()))?);
+            .poll_frame(cx)
+            .map_ok(|frame| frame.map_data(|mut chunk| chunk.copy_to_bytes(chunk.remaining())))?);
         if let Some(chunk) = poll {
             Poll::Ready(Some(Ok(chunk)))
         } else if let Some(trail) = this.inject.take() {
-            Poll::Ready(Some(Ok(trail)))
+            Poll::Ready(Some(Ok(Frame::data(trail))))
         } else {
             Poll::Ready(None)
         }
-    }
-
-    fn poll_trailers(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
-        self.project().body.poll_trailers(cx)
     }
 }
