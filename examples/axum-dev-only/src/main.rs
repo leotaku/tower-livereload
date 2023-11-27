@@ -7,9 +7,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(debug_assertions)]
     let app = app.layer(tower_livereload::LiveReloadLayer::new());
 
-    axum::Server::bind(&"0.0.0.0:3030".parse()?)
-        .serve(app.into_make_service())
-        .await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3030").await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

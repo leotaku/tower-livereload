@@ -63,13 +63,13 @@ async fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mut watcher = notify::recommended_watcher(move |_| reloader.reload())?;
     watcher.watch(&args.directory, notify::RecursiveMode::Recursive)?;
 
-    let addr = (args.addr, args.port).into();
+    let addr: std::net::SocketAddr = (args.addr, args.port).into();
     eprintln!("listening on: http://{}/", addr);
 
     tracing_subscriber::fmt::init();
-    axum::Server::try_bind(&addr)?
-        .serve(app.into_make_service())
-        .await?;
+
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
