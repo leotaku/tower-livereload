@@ -32,9 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(|| async { Html("<h1>Wow, such webdev</h1>") }))
         .layer(LiveReloadLayer::new());
 
-    axum::Server::bind(&"0.0.0.0:3030".parse()?)
-        .serve(app.into_make_service())
-        .await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3030").await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
