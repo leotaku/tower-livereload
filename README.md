@@ -19,8 +19,8 @@ A middleware for browser reloading, built on top of [`tower`].
 
 ## Example
 
-Note that [`axum`] is only used as an example here, pretty much any Rust HTTP
-library or framework will be compatible!
+Note that [`axum`] is only used as an example here, pretty much any Rust
+HTTP library or framework will be compatible!
 
 ```rust
 use axum::{response::Html, routing::get, Router};

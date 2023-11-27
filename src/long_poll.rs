@@ -23,7 +23,6 @@ impl http_body::Body for LongPollBody {
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
-
         match self.receiver.take() {
             Some(mut receiver) => {
                 let waker = cx.waker().clone();
