@@ -7,7 +7,7 @@
 
   const retry = (url) => {{
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 500);
+    setTimeout(() => controller.abort(), 500);
     fetch(url, {{ cache: "no-store", signal: controller.signal }})
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
