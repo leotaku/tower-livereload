@@ -12,10 +12,10 @@ repository = "https://github.com/leotaku/tower-livereload"
 version = "1.0.9-wip"
 
 [dependencies]
-axum = "0.7.4"
-clap = { version = "4.5.2", features = ["derive"] }
+axum = "0.7.5"
+clap = { version = "4.5.4", features = ["derive"] }
 notify = "6.1.1"
-tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 tower = "0.4.13"
 tower-http = { version = "0.5.2", features = ["fs", "set-header"] }
 tower-livereload = { version = "0.9.3-wip", path = "../.." }

@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.7.4"
-tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+axum = "0.7.5"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 tower-livereload = { path = "../.." }
