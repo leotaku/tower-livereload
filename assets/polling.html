@@ -9,6 +9,7 @@
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 500);
     fetch(url, {{ cache: "no-store", signal: controller.signal }})
+      .then((resp) => resp.ok ? resp : Promise.reject())
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
       .catch(() => setTimeout(() => retry(url), {reload_interval}))
