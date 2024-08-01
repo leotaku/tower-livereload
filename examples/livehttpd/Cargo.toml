@@ -13,9 +13,9 @@ version = "1.0.10-wip"
 
 [dependencies]
 axum = "0.7.5"
-clap = { version = "4.5.7", features = ["derive"] }
+clap = { version = "4.5.13", features = ["derive"] }
 notify = "6.1.1"
-tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 tower = "0.4.13"
 tower-http = { version = "0.5.2", features = ["fs", "set-header"] }
 tower-livereload = { version = "0.9.4-wip", path = "../.." }
