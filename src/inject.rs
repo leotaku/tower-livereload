@@ -74,8 +74,13 @@ where
         let response = ready!(this.inner.poll(cx)?);
 
         let data = match this.data {
-            Some(data) => data,
-            None => {
+            Some(data)
+                if response.headers().get(header::CONTENT_ENCODING).is_none()
+                    && this.predicate.check(&response) =>
+            {
+                data
+            }
+            Some(_) | None => {
                 let (parts, body) = response.into_parts();
                 return Poll::Ready(Ok(Response::from_parts(
                     parts,
@@ -84,21 +89,10 @@ where
             }
         };
 
-        let content_length: Option<usize> = this
-            .predicate
-            .check(&response)
-            .then(|| {
-                response
-                    .headers()
-                    .get(header::CONTENT_ENCODING)
-                    .map_or_else(|| Some(()), |_| None)
-            })
-            .and_then(|_| {
-                response
-                    .headers()
-                    .get(header::CONTENT_LENGTH)
-                    .and_then(|value| value.to_str().ok().and_then(|s| s.parse().ok()))
-            });
+        let content_length: Option<usize> = response
+            .headers()
+            .get(header::CONTENT_LENGTH)
+            .and_then(|value| value.to_str().ok().and_then(|s| s.parse().ok()));
 
         let (mut parts, body) = response.into_parts();
         if let Some(length) = content_length {
