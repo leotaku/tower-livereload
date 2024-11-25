@@ -101,16 +101,19 @@ where
             });
 
         let (mut parts, body) = response.into_parts();
-        let inject = if let Some(length) = content_length {
+        if let Some(length) = content_length {
             parts
                 .headers
                 .insert(header::CONTENT_LENGTH, (length + data.remaining()).into());
-            this.data.take()
-        } else {
-            None
         };
 
-        Poll::Ready(Ok(Response::from_parts(parts, InjectBody { body, inject })))
+        Poll::Ready(Ok(Response::from_parts(
+            parts,
+            InjectBody {
+                body,
+                inject: this.data.take(),
+            },
+        )))
     }
 }
 
