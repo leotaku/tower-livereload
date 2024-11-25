@@ -79,8 +79,7 @@ that also uses those crates, such as [`hyper`], [`axum`], [`tonic`], and
 To provide LiveReload functionality, we have to inject code into HTML web
 pages. To determine whether a page is injectable, some header-based
 heuristics are used. In particular, [`Content-Type`] has to start with
-`text/html`, [`Content-Length`] must be set, and [`Content-Encoding`] must
-not be set.
+`text/html` and [`Content-Encoding`] must not be set.
 
 If LiveReload is not working for some of your pages, ensure that these
 heuristics apply to your responses. In particular, if you use middleware to
@@ -88,7 +87,6 @@ compress your HTML, ensure that the [`LiveReload`] middleware is
 applied before your compression middleware.
 
 [`Content-Type`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
-[`Content-Length`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Length
 [`Content-Encoding`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
 
 <!-- Override internal links from README generation: -->
