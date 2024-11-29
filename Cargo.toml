@@ -17,9 +17,9 @@ doctest = false
 path = "./src/lib.rs"
 
 [dependencies]
-bytes = "1.7.2"
+bytes = "1.9.0"
 http = "1.1.0"
 http-body = "1.0.1"
-pin-project-lite = "0.2.14"
-tokio = { version = "1.40.0", features = ["sync", "rt"] }
+pin-project-lite = "0.2.15"
+tokio = { version = "1.41.1", features = ["sync", "rt"] }
 tower = "0.5.1"
