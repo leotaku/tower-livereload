@@ -1,29 +1,33 @@
-<script type="module">
+(() => {
+  const inputs = document.currentScript.dataset;
+
   const controller = new AbortController();
   var unloaded = false;
-
-  addEventListener('beforeunload', (event) => {{
+  addEventListener("beforeunload", () => {
     unloaded = true;
     controller.abort();
-  }});
+  });
 
-  const retry = (url) => {{
+  const retry = (url) => {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 500);
-    fetch(url, {{ cache: "no-store", signal: controller.signal }})
-      .then((resp) => resp.ok ? resp : Promise.reject())
+    fetch(url, { cache: "no-store", signal: controller.signal })
+      .then((resp) => (resp.ok ? resp : Promise.reject()))
       .then(() => console.log("[tower-livereload] reload..."))
       .then(() => window.location.reload())
-      .catch(() => setTimeout(() => retry(url), {reload_interval}))
-  }};
+      .catch(() => setTimeout(() => retry(url), inputs.reloadInterval));
+  };
 
   const main = () =>
-    fetch("{long_poll}", {{ cache: "no-store", signal: controller.signal }})
+    fetch(inputs.longPoll, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then((rsp) => rsp.text())
       .catch(() => null)
       .then(() => console.log("[tower-livereload] disconnected..."))
-      .then(() => unloaded ? null : retry("{back_up}"));
+      .then(() => (unloaded ? null : retry(inputs.backUp)));
 
   console.log("[tower-livereload] connected...");
   main();
-</script>
+})();

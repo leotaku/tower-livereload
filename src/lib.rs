@@ -286,7 +286,8 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         let inject = InjectService::new(
             service,
             format!(
-                include_str!("../assets/polling.html"),
+                r#"<script data-long-poll="{long_poll}" data-back-up="{back_up}" data-reload-interval="{reload_interval}">{code}</script>"#,
+                code = include_str!("../assets/polling.js"),
                 long_poll = long_poll_path,
                 back_up = back_up_path,
                 reload_interval = reload_interval.as_millis(),
