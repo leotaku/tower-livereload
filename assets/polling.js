@@ -20,15 +20,12 @@
       .catch(() => setTimeout(() => retry(url), inputs.reloadInterval));
   };
 
-  const main = () =>
-    fetch(inputs.longPoll, { cache: "no-store", signal: controller.signal })
-      .then((rsp) => rsp.text())
-      .catch(() => null)
-      .then(() => {
-        console.log("[tower-livereload] disconnected...");
-        if (!unloaded) retry(inputs.backUp);
-      });
-
   console.log("[tower-livereload] connected...");
-  main();
+  fetch(inputs.longPoll, { cache: "no-store", signal: controller.signal })
+    .then((rsp) => rsp.text())
+    .catch(() => null)
+    .then(() => {
+      console.log("[tower-livereload] disconnected...");
+      if (!unloaded) retry(inputs.backUp);
+    });
 })();
