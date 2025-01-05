@@ -80,7 +80,6 @@ mod inject;
 mod long_poll;
 mod overlay;
 pub mod predicate;
-mod ready_polyfill;
 
 use std::{convert::Infallible, time::Duration};
 
