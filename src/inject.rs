@@ -1,11 +1,11 @@
-use std::{future::Future, task::Poll};
+use std::{future::Future, task::{ready, Poll}};
 
 use bytes::{Buf, Bytes};
 use http::{header, Request, Response};
 use http_body::Frame;
 use tower::Service;
 
-use crate::{predicate::Predicate, ready_polyfill::ready};
+use crate::predicate::Predicate;
 
 #[derive(Clone, Debug)]
 pub struct InjectService<S, ReqPred, ResPred> {
