@@ -1,8 +1,10 @@
 <script type="module">
+  const controller = new AbortController();
   var unloaded = false;
 
   addEventListener('beforeunload', (event) => {{
     unloaded = true;
+    controller.abort();
   }});
 
   const retry = (url) => {{
@@ -16,7 +18,7 @@
   }};
 
   const main = () =>
-    fetch("{long_poll}", {{ cache: "no-store" }})
+    fetch("{long_poll}", {{ cache: "no-store", signal: controller.signal }})
       .then((rsp) => rsp.text())
       .catch(() => null)
       .then(() => console.log("[tower-livereload] disconnected..."))
