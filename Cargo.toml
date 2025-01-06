@@ -18,8 +18,8 @@ path = "./src/lib.rs"
 
 [dependencies]
 bytes = "1.9.0"
-http = "1.1.0"
+http = "1.2.0"
 http-body = "1.0.1"
-pin-project-lite = "0.2.15"
-tokio = { version = "1.41.1", features = ["sync", "rt"] }
-tower = "0.5.1"
+pin-project-lite = "0.2.16"
+tokio = { version = "1.42.0", features = ["sync", "rt"] }
+tower = "0.5.2"
