@@ -154,7 +154,14 @@ pub enum OverlayError<A, B> {
     B(B),
 }
 
-impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayError<A, B> {}
+impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayError<A, B> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            OverlayError::A(a) => a.source(),
+            OverlayError::B(b) => b.source(),
+        }
+    }
+}
 
 impl<A: Display, B: Display> Display for OverlayError<A, B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
