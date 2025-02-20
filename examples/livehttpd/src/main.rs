@@ -56,7 +56,7 @@ async fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let livereload = LiveReloadLayer::new();
     let reloader = livereload.reloader();
     let app = Router::new()
-        .nest_service("/", ServeDir::new(&args.directory))
+        .fallback_service(ServeDir::new(&args.directory))
         .layer(livereload)
         .layer(no_cache_layer());
 

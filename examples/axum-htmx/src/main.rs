@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let livereload = LiveReloadLayer::new();
     let reloader = livereload.reloader();
     let app = Router::new()
-        .nest_service("/", ServeDir::new(Path::new("assets")))
+        .fallback_service(ServeDir::new(Path::new("assets")))
         .layer(livereload.request_predicate(not_htmx_predicate));
 
     let mut watcher = notify::recommended_watcher(move |_| reloader.reload())?;
