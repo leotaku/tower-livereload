@@ -47,6 +47,7 @@ fn no_cache_layer() -> Stack<Srhl, Stack<Srhl, Srhl>> {
 async fn main() {
     if let Err(error) = try_main().await {
         eprintln!("{}", error);
+        std::process::exit(1);
     }
 }
 
