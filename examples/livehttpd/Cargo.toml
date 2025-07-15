@@ -13,7 +13,7 @@ version = "1.0.14-wip"
 
 [dependencies]
 axum = "0.8.4"
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.41", features = ["derive"] }
 notify = "8.1.0"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.2"
