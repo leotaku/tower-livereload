@@ -2,14 +2,14 @@
   "name": "playwright",
   "description": "Playwright E2E tests for tower-livereload",
   "scripts": {
-    "docker": "docker run --net=host --rm --init -it mcr.microsoft.com/playwright:v1.45.3 /bin/sh -c 'cd /home/pwuser && npx -y playwright run-server --port 3000 --host 0.0.0.0'",
+    "docker": "docker run --net=host --rm --init -it mcr.microsoft.com/playwright:v1.55.0 /bin/sh -c 'cd /home/pwuser && npx -y playwright run-server --port 3000 --host 0.0.0.0'",
     "playwright": "PW_TEST_CONNECT_WS_ENDPOINT=ws://127.0.0.1:3000/ playwright"
   },
   "keywords": [],
   "author": "Leo Gaskin <leo.gaskin@le0.gs>",
   "license": "MIT OR Apache-2.0",
   "devDependencies": {
-    "@playwright/test": "^1.54.1",
-    "@types/node": "^22.16.3"
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.18.1"
   }
 }
