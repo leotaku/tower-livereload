@@ -1,6 +1,6 @@
 use axum::{http, Router};
 use clap::Parser;
-use notify::Watcher;
+use notify::Watcher as _;
 use tower::layer::util::Stack;
 use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
