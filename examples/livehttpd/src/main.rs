@@ -61,7 +61,11 @@ async fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(livereload)
         .layer(no_cache_layer());
 
-    let mut watcher = notify::recommended_watcher(move |_| reloader.reload())?;
+    let mut watcher = notify::recommended_watcher(move |event: Result<_, _>| {
+        if event.is_ok_and(|it: notify::Event| !it.kind.is_access()) {
+            reloader.reload();
+        }
+    })?;
     watcher.watch(&args.directory, notify::RecursiveMode::Recursive)?;
 
     let addr: std::net::SocketAddr = (args.addr, args.port).into();
