@@ -295,19 +295,31 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
             req_predicate,
             res_predicate,
         );
-        let overlay_poll = OverlayService::new(inject).path(long_poll_path, move || {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/event-stream")
-                .body(LongPollBody::new(reloader.sender.subscribe()))
-                .map_err(|_| unreachable!())
+        let overlay_poll = OverlayService::new(inject, move |parts| {
+            if parts.uri.path() == long_poll_path {
+                return Some(
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .header(header::CONTENT_TYPE, "text/event-stream")
+                        .body(LongPollBody::new(reloader.sender.subscribe()))
+                        .map_err(|_| unreachable!()),
+                );
+            }
+
+            None
         });
-        let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/plain")
-                .body("Ok".to_owned())
-                .map_err(|_| unreachable!())
+        let overlay_up = OverlayService::new(overlay_poll, move |parts| {
+            if parts.uri.path() == back_up_path {
+                return Some(
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .header(header::CONTENT_TYPE, "text/plain")
+                        .body("Ok".to_owned())
+                        .map_err(|_| unreachable!()),
+                );
+            }
+
+            None
         });
 
         LiveReload {

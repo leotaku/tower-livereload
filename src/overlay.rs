@@ -1,40 +1,31 @@
-use std::{
-    collections::HashMap, convert::Infallible, fmt::Display, future::Future, sync::Arc, task::Poll,
-};
+use std::{convert::Infallible, fmt::Display, future::Future, sync::Arc, task::Poll};
 
 use bytes::Buf;
-use http::{Request, Response};
+use http::{request::Parts, Request, Response};
 use http_body::{Body, Frame};
 use tower::Service;
 
 pub struct OverlayService<B, E, S> {
-    map: HashMap<String, Arc<dyn Fn() -> Result<Response<B>, E> + Send + Sync>>,
+    alternative: Arc<dyn Fn(&Parts) -> Option<Result<Response<B>, E>> + Send + Sync>,
     service: S,
 }
 
 impl<B, E, S> OverlayService<B, E, S> {
-    pub fn new(service: S) -> Self {
+    pub fn new(
+        service: S,
+        alternative_fn: impl Fn(&Parts) -> Option<Result<Response<B>, E>> + Send + Sync + 'static,
+    ) -> Self {
         Self {
-            map: HashMap::new(),
+            alternative: Arc::new(alternative_fn),
             service,
         }
-    }
-
-    pub fn path(
-        self,
-        path: impl Into<String>,
-        resp: impl Fn() -> Result<Response<B>, E> + Send + Sync + 'static,
-    ) -> Self {
-        let mut result = self;
-        result.map.insert(path.into(), Arc::new(resp));
-        result
     }
 }
 
 impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
     fn clone(&self) -> Self {
         OverlayService {
-            map: self.map.clone(),
+            alternative: self.alternative.clone(),
             service: self.service.clone(),
         }
     }
@@ -46,17 +37,15 @@ impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
             write!(
                 f,
                 "OverlayService: {{
-    map.keys: {:#?},
+    alternative: ...,
     service: {:#?}
 }}",
-                self.map.keys(),
                 self.service,
             )
         } else {
             write!(
                 f,
-                "OverlayService: {{ map.keys: {:?}, service: {:?} }}",
-                self.map.keys(),
+                "OverlayService: {{ alternative: ..., service: {:?} }}",
                 self.service,
             )
         }
@@ -80,15 +69,15 @@ where
     }
 
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
-        let path = req.uri().path();
-        if let Some(fun) = self.map.get(path) {
+        let (parts, body) = req.into_parts();
+        if let Some(result) = self.alternative.clone()(&parts) {
             OverlayFuture {
-                inner: self.service.call(req),
-                response: Some(fun()),
+                inner: self.service.call(Request::from_parts(parts, body)),
+                response: Some(result),
             }
         } else {
             OverlayFuture {
-                inner: self.service.call(req),
+                inner: self.service.call(Request::from_parts(parts, body)),
                 response: None,
             }
         }
