@@ -71,24 +71,27 @@ where
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
         let (parts, body) = req.into_parts();
         if let Some(result) = self.alternative.clone()(&parts) {
-            OverlayFuture {
-                inner: self.service.call(Request::from_parts(parts, body)),
-                response: Some(result),
+            OverlayFuture::Alternative {
+                alternative: Some(result),
             }
         } else {
-            OverlayFuture {
+            OverlayFuture::Inner {
                 inner: self.service.call(Request::from_parts(parts, body)),
-                response: None,
             }
         }
     }
 }
 
 pin_project_lite::pin_project! {
-    pub struct OverlayFuture<B, E, F> {
-        #[pin]
-        inner: F,
-        response: Option<Result<Response<B>, E>>,
+    #[project = OverlayFutureProj]
+    pub enum OverlayFuture<B, E, F> {
+        Inner {
+            #[pin]
+            inner: F
+        },
+        Alternative {
+            alternative: Option<Result<Response<B>, E>>
+        },
     }
 }
 
@@ -100,16 +103,21 @@ where
 
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
-        if let Some(resp) = this.response.take() {
-            Poll::Ready(
-                resp.map(|ok| ok.map(|a| OverlayBody::A { a }))
-                    .map_err(OverlayError::A),
-            )
-        } else {
-            this.inner
+
+        match this {
+            OverlayFutureProj::Inner { inner } => inner
                 .poll(cx)
                 .map_ok(|resp| resp.map(|b| OverlayBody::B { b }))
-                .map_err(OverlayError::B)
+                .map_err(OverlayError::B),
+            OverlayFutureProj::Alternative { alternative } => Poll::Ready(
+                alternative
+                    .take()
+                    .map(|some| {
+                        some.map(|ok| ok.map(|a| OverlayBody::A { a }))
+                            .map_err(OverlayError::A)
+                    })
+                    .unwrap_or_else(|| unreachable!()),
+            ),
         }
     }
 }
