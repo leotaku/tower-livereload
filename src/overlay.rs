@@ -65,7 +65,7 @@ where
         &mut self,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
-        self.service.poll_ready(cx).map_err(OverlayError::B)
+        self.service.poll_ready(cx).map_err(OverlayError::Right)
     }
 
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
@@ -107,14 +107,14 @@ where
         match this {
             OverlayFutureProj::Inner { inner } => inner
                 .poll(cx)
-                .map_ok(|resp| resp.map(|b| OverlayBody::B { b }))
-                .map_err(OverlayError::B),
+                .map_ok(|resp| resp.map(|right| OverlayBody::Right { right }))
+                .map_err(OverlayError::Right),
             OverlayFutureProj::Alternative { alternative } => Poll::Ready(
                 alternative
                     .take()
                     .map(|some| {
-                        some.map(|ok| ok.map(|a| OverlayBody::A { a }))
-                            .map_err(OverlayError::A)
+                        some.map(|ok| ok.map(|left| OverlayBody::Left { left }))
+                            .map_err(OverlayError::Left)
                     })
                     .unwrap_or_else(|| unreachable!()),
             ),
@@ -124,9 +124,15 @@ where
 
 pin_project_lite::pin_project! {
     #[project = OverlayBodyProj]
-    pub enum OverlayBody<A, B> {
-        A{#[pin] a: A},
-        B{#[pin] b: B},
+    pub enum OverlayBody<L, R> {
+        Left {
+            #[pin]
+            left: L
+        },
+        Right{
+            #[pin]
+            right: R
+        },
     }
 }
 
@@ -139,45 +145,45 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
         match self.project() {
-            OverlayBodyProj::A { a } => a.poll_frame(cx).map_err(OverlayError::A),
-            OverlayBodyProj::B { b } => b.poll_frame(cx).map_err(OverlayError::B),
+            OverlayBodyProj::Left { left } => left.poll_frame(cx).map_err(OverlayError::Left),
+            OverlayBodyProj::Right { right } => right.poll_frame(cx).map_err(OverlayError::Right),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum OverlayError<A, B> {
-    A(A),
-    B(B),
+pub enum OverlayError<L, R> {
+    Left(L),
+    Right(R),
 }
 
-impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayError<A, B> {
+impl<L: std::error::Error, R: std::error::Error> std::error::Error for OverlayError<L, R> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            OverlayError::A(a) => a.source(),
-            OverlayError::B(b) => b.source(),
+            OverlayError::Left(left) => left.source(),
+            OverlayError::Right(right) => right.source(),
         }
     }
 }
 
-impl<A: std::fmt::Display, B: std::fmt::Display> std::fmt::Display for OverlayError<A, B> {
+impl<L: std::fmt::Display, R: std::fmt::Display> std::fmt::Display for OverlayError<L, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            OverlayError::A(a) => a.fmt(f),
-            OverlayError::B(b) => b.fmt(f),
+            OverlayError::Left(left) => left.fmt(f),
+            OverlayError::Right(right) => right.fmt(f),
         }
     }
 }
 
-impl<A, B> From<OverlayError<A, B>> for Infallible
+impl<L, R> From<OverlayError<L, R>> for Infallible
 where
-    A: Into<Infallible>,
-    B: Into<Infallible>,
+    L: Into<Infallible>,
+    R: Into<Infallible>,
 {
-    fn from(value: OverlayError<A, B>) -> Self {
+    fn from(value: OverlayError<L, R>) -> Self {
         match value {
-            OverlayError::A(a) => a.into(),
-            OverlayError::B(b) => b.into(),
+            OverlayError::Left(left) => left.into(),
+            OverlayError::Right(right) => right.into(),
         }
     }
 }
