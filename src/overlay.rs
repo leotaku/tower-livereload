@@ -1,4 +1,4 @@
-use std::{convert::Infallible, fmt::Display, future::Future, sync::Arc, task::Poll};
+use std::{convert::Infallible, future::Future, sync::Arc, task::Poll};
 
 use bytes::Buf;
 use http::{request::Parts, Request, Response};
@@ -160,7 +160,7 @@ impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayEr
     }
 }
 
-impl<A: Display, B: Display> Display for OverlayError<A, B> {
+impl<A: std::fmt::Display, B: std::fmt::Display> std::fmt::Display for OverlayError<A, B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OverlayError::A(a) => a.fmt(f),
