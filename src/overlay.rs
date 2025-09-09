@@ -33,22 +33,10 @@ impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
 
 impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(
-                f,
-                "OverlayService: {{
-    alternative: ...,
-    service: {:#?}
-}}",
-                self.service,
-            )
-        } else {
-            write!(
-                f,
-                "OverlayService: {{ alternative: ..., service: {:?} }}",
-                self.service,
-            )
-        }
+        f.debug_struct("OverlayService")
+            .field("alternative", &"...")
+            .field("service", &self.service)
+            .finish()
     }
 }
 
