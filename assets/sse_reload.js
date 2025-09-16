@@ -17,5 +17,9 @@
     };
 
     source.addEventListener("error", onerror);
+
+    addEventListener("pagehide", () => {
+      source.removeEventListener("error", onerror)
+    });
   });
 })();
