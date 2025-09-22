@@ -147,15 +147,6 @@ impl LiveReloadLayer {
             reload_interval: Duration::from_secs(1),
         }
     }
-
-    /// Create a new [`LiveReloadLayer`] with a custom prefix.
-    #[deprecated(
-        since = "0.8.0",
-        note = "please use `LiveReloadLayer::new` and `custom_prefix` instead"
-    )]
-    pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> Self {
-        Self::new().custom_prefix(prefix)
-    }
 }
 
 impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
@@ -263,12 +254,7 @@ pub struct LiveReload<S, ReqPred = Always, ResPred = ContentTypeStartsWith<&'sta
 }
 
 impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
-    #[deprecated(
-        since = "0.9.0",
-        note = "please use `LiveReloadLayer::new().layer(service)` instead"
-    )]
-    /// Create a new [`LiveReload`] middleware.
-    pub fn new<P: Into<String>>(
+    fn new<P: Into<String>>(
         service: S,
         reloader: Reloader,
         req_predicate: ReqPred,
