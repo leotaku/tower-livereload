@@ -91,7 +91,7 @@ use sse::ReloadEventsBody;
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
-const DEFAULT_PREFIX: &str = "/tower-livereload/long-name-to-avoid-collisions";
+const DEFAULT_PREFIX: &str = "/_tower-livereload";
 
 /// Utility to send reload requests to clients.
 #[derive(Clone, Debug)]
@@ -135,9 +135,6 @@ pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'s
 impl LiveReloadLayer {
     /// Create a new [`LiveReloadLayer`] with the default prefix for internal
     /// routes.
-    ///
-    /// The default prefix is deliberately long and specific to avoid any
-    /// accidental collisions with the wrapped service.
     pub fn new() -> Self {
         Self {
             custom_prefix: None,
