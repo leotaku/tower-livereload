@@ -91,7 +91,7 @@ use predicate::{Always, ContentTypeStartsWith, Predicate};
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
-const DEFAULT_PREFIX: &str = "/tower-livereload/long-name-to-avoid-collisions";
+const DEFAULT_PREFIX: &str = "/_tower-livereload";
 
 /// Utility to send reload requests to clients.
 #[derive(Clone, Debug)]
