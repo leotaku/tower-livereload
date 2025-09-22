@@ -152,9 +152,9 @@ impl LiveReloadLayer {
 impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     /// Set a custom prefix for internal routes for the given
     /// [`LiveReloadLayer`].
-    pub fn custom_prefix<P: Into<String>>(self, prefix: P) -> Self {
+    pub fn custom_prefix<P: AsRef<str>>(self, prefix: P) -> Self {
         Self {
-            custom_prefix: Some(prefix.into()),
+            custom_prefix: Some(prefix.as_ref().to_owned()),
             ..self
         }
     }
@@ -257,7 +257,7 @@ pub struct LiveReload<S, ReqPred = Always, ResPred = ContentTypeStartsWith<&'sta
 }
 
 impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
-    fn new<P: Into<String>>(
+    fn new<P: AsRef<str>>(
         service: S,
         reloader: Reloader,
         req_predicate: ReqPred,
@@ -265,9 +265,8 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         reload_interval: Duration,
         prefix: P,
     ) -> Self {
-        let prefix = prefix.into();
-        let long_poll_path = format!("{}/long-poll", prefix);
-        let back_up_path = format!("{}/back-up", prefix);
+        let long_poll_path = format!("{}/long-poll", prefix.as_ref());
+        let back_up_path = format!("{}/back-up", prefix.as_ref());
         let inject = InjectService::new(
             service,
             format!(
