@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(livereload);
 
     let mut watcher = notify::recommended_watcher(move |event: Result<_, _>| {
-        if event.is_ok_and(|it: notify::Event| !it.kind.is_access()) {
+        if event.is_ok_and(|evt: notify::Event| !evt.kind.is_access()) {
             reloader.reload();
         }
     })?;
