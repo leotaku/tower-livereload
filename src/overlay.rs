@@ -1,40 +1,31 @@
-use std::{
-    collections::HashMap, convert::Infallible, fmt::Display, future::Future, sync::Arc, task::Poll,
-};
+use std::{convert::Infallible, future::Future, sync::Arc, task::Poll};
 
 use bytes::Buf;
-use http::{Request, Response};
+use http::{request::Parts, Request, Response};
 use http_body::{Body, Frame};
 use tower::Service;
 
 pub struct OverlayService<B, E, S> {
-    map: HashMap<String, Arc<dyn Fn() -> Result<Response<B>, E> + Send + Sync>>,
+    alternative: Arc<dyn Fn(&Parts) -> Option<Result<Response<B>, E>> + Send + Sync>,
     service: S,
 }
 
 impl<B, E, S> OverlayService<B, E, S> {
-    pub fn new(service: S) -> Self {
+    pub fn new(
+        service: S,
+        alternative_fn: impl Fn(&Parts) -> Option<Result<Response<B>, E>> + Send + Sync + 'static,
+    ) -> Self {
         Self {
-            map: HashMap::new(),
+            alternative: Arc::new(alternative_fn),
             service,
         }
-    }
-
-    pub fn path(
-        self,
-        path: impl Into<String>,
-        resp: impl Fn() -> Result<Response<B>, E> + Send + Sync + 'static,
-    ) -> Self {
-        let mut result = self;
-        result.map.insert(path.into(), Arc::new(resp));
-        result
     }
 }
 
 impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
     fn clone(&self) -> Self {
         OverlayService {
-            map: self.map.clone(),
+            alternative: self.alternative.clone(),
             service: self.service.clone(),
         }
     }
@@ -42,24 +33,10 @@ impl<B, E, S: Clone> Clone for OverlayService<B, E, S> {
 
 impl<B, E, S: std::fmt::Debug> std::fmt::Debug for OverlayService<B, E, S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(
-                f,
-                "OverlayService: {{
-    map.keys: {:#?},
-    service: {:#?}
-}}",
-                self.map.keys(),
-                self.service,
-            )
-        } else {
-            write!(
-                f,
-                "OverlayService: {{ map.keys: {:?}, service: {:?} }}",
-                self.map.keys(),
-                self.service,
-            )
-        }
+        f.debug_struct("OverlayService")
+            .field("alternative", &"...")
+            .field("service", &self.service)
+            .finish()
     }
 }
 
@@ -76,30 +53,33 @@ where
         &mut self,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
-        self.service.poll_ready(cx).map_err(OverlayError::B)
+        self.service.poll_ready(cx).map_err(OverlayError::Right)
     }
 
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
-        let path = req.uri().path();
-        if let Some(fun) = self.map.get(path) {
-            OverlayFuture {
-                inner: self.service.call(req),
-                response: Some(fun()),
+        let (parts, body) = req.into_parts();
+        if let Some(result) = self.alternative.clone()(&parts) {
+            OverlayFuture::Alternative {
+                alternative: Some(result),
             }
         } else {
-            OverlayFuture {
-                inner: self.service.call(req),
-                response: None,
+            OverlayFuture::Inner {
+                inner: self.service.call(Request::from_parts(parts, body)),
             }
         }
     }
 }
 
 pin_project_lite::pin_project! {
-    pub struct OverlayFuture<B, E, F> {
-        #[pin]
-        inner: F,
-        response: Option<Result<Response<B>, E>>,
+    #[project = OverlayFutureProj]
+    pub enum OverlayFuture<B, E, F> {
+        Inner {
+            #[pin]
+            inner: F
+        },
+        Alternative {
+            alternative: Option<Result<Response<B>, E>>
+        },
     }
 }
 
@@ -111,25 +91,36 @@ where
 
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
-        if let Some(resp) = this.response.take() {
-            Poll::Ready(
-                resp.map(|ok| ok.map(|a| OverlayBody::A { a }))
-                    .map_err(OverlayError::A),
-            )
-        } else {
-            this.inner
+
+        match this {
+            OverlayFutureProj::Inner { inner } => inner
                 .poll(cx)
-                .map_ok(|resp| resp.map(|b| OverlayBody::B { b }))
-                .map_err(OverlayError::B)
+                .map_ok(|resp| resp.map(|right| OverlayBody::Right { right }))
+                .map_err(OverlayError::Right),
+            OverlayFutureProj::Alternative { alternative } => Poll::Ready(
+                alternative
+                    .take()
+                    .map(|some| {
+                        some.map(|ok| ok.map(|left| OverlayBody::Left { left }))
+                            .map_err(OverlayError::Left)
+                    })
+                    .unwrap_or_else(|| unreachable!()),
+            ),
         }
     }
 }
 
 pin_project_lite::pin_project! {
     #[project = OverlayBodyProj]
-    pub enum OverlayBody<A, B> {
-        A{#[pin] a: A},
-        B{#[pin] b: B},
+    pub enum OverlayBody<L, R> {
+        Left {
+            #[pin]
+            left: L
+        },
+        Right{
+            #[pin]
+            right: R
+        },
     }
 }
 
@@ -142,45 +133,45 @@ impl<Data: Buf, A: Body<Data = Data>, B: Body<Data = Data>> Body for OverlayBody
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
         match self.project() {
-            OverlayBodyProj::A { a } => a.poll_frame(cx).map_err(OverlayError::A),
-            OverlayBodyProj::B { b } => b.poll_frame(cx).map_err(OverlayError::B),
+            OverlayBodyProj::Left { left } => left.poll_frame(cx).map_err(OverlayError::Left),
+            OverlayBodyProj::Right { right } => right.poll_frame(cx).map_err(OverlayError::Right),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum OverlayError<A, B> {
-    A(A),
-    B(B),
+pub enum OverlayError<L, R> {
+    Left(L),
+    Right(R),
 }
 
-impl<A: std::error::Error, B: std::error::Error> std::error::Error for OverlayError<A, B> {
+impl<L: std::error::Error, R: std::error::Error> std::error::Error for OverlayError<L, R> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            OverlayError::A(a) => a.source(),
-            OverlayError::B(b) => b.source(),
+            OverlayError::Left(left) => left.source(),
+            OverlayError::Right(right) => right.source(),
         }
     }
 }
 
-impl<A: Display, B: Display> Display for OverlayError<A, B> {
+impl<L: std::fmt::Display, R: std::fmt::Display> std::fmt::Display for OverlayError<L, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            OverlayError::A(a) => a.fmt(f),
-            OverlayError::B(b) => b.fmt(f),
+            OverlayError::Left(left) => left.fmt(f),
+            OverlayError::Right(right) => right.fmt(f),
         }
     }
 }
 
-impl<A, B> From<OverlayError<A, B>> for Infallible
+impl<L, R> From<OverlayError<L, R>> for Infallible
 where
-    A: Into<Infallible>,
-    B: Into<Infallible>,
+    L: Into<Infallible>,
+    R: Into<Infallible>,
 {
-    fn from(value: OverlayError<A, B>) -> Self {
+    fn from(value: OverlayError<L, R>) -> Self {
         match value {
-            OverlayError::A(a) => a.into(),
-            OverlayError::B(b) => b.into(),
+            OverlayError::Left(left) => left.into(),
+            OverlayError::Right(right) => right.into(),
         }
     }
 }
