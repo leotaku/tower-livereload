@@ -77,17 +77,17 @@
 #![allow(clippy::type_complexity)]
 
 mod inject;
-mod long_poll;
 mod overlay;
 pub mod predicate;
+mod sse;
 
 use std::{convert::Infallible, time::Duration};
 
 use http::{header, Request, Response, StatusCode};
 use inject::InjectService;
-use long_poll::LongPollBody;
 use overlay::OverlayService;
 use predicate::{Always, ContentTypeStartsWith, Predicate};
+use sse::ReloadEventsBody;
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
@@ -253,11 +253,8 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
     }
 }
 
-type InnerService<S, ReqPred, ResPred> = OverlayService<
-    String,
-    Infallible,
-    OverlayService<LongPollBody, Infallible, InjectService<S, ReqPred, ResPred>>,
->;
+type InnerService<S, ReqPred, ResPred> =
+    OverlayService<ReloadEventsBody, Infallible, InjectService<S, ReqPred, ResPred>>;
 
 /// Middleware to enable LiveReload functionality.
 #[derive(Clone, Debug)]
@@ -279,40 +276,36 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         reload_interval: Duration,
         prefix: P,
     ) -> Self {
-        let prefix = prefix.into();
-        let long_poll_path = format!("{}/long-poll", prefix);
-        let back_up_path = format!("{}/back-up", prefix);
+        let event_stream_path = format!("{}/event-stream", prefix.into());
         let inject = InjectService::new(
             service,
             format!(
-                r#"<script data-long-poll="{long_poll}" data-back-up="{back_up}" data-reload-interval="{reload_interval}">{code}</script>"#,
-                code = include_str!("../assets/polling.js"),
-                long_poll = long_poll_path,
-                back_up = back_up_path,
-                reload_interval = reload_interval.as_millis(),
+                r#"<script data-event-stream="{path}">{code}</script>"#,
+                path = event_stream_path,
+                code = include_str!("../assets/sse_reload.js"),
             )
             .into(),
             req_predicate,
             res_predicate,
         );
-        let overlay_poll = OverlayService::new(inject).path(long_poll_path, move || {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/event-stream")
-                .body(LongPollBody::new(reloader.sender.subscribe()))
-                .map_err(|_| unreachable!())
-        });
-        let overlay_up = OverlayService::new(overlay_poll).path(back_up_path, || {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/plain")
-                .body("Ok".to_owned())
-                .map_err(|_| unreachable!())
+        let overlay = OverlayService::new(inject, move |parts| {
+            if parts.uri.path() == event_stream_path {
+                return Some(
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .header(header::CONTENT_TYPE, "text/event-stream")
+                        .body(ReloadEventsBody::new(
+                            reloader.sender.subscribe(),
+                            reload_interval,
+                        ))
+                        .map_err(|_| unreachable!()),
+                );
+            }
+
+            None
         });
 
-        LiveReload {
-            service: overlay_up,
-        }
+        LiveReload { service: overlay }
     }
 }
 
