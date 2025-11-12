@@ -226,7 +226,6 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
     type Service = LiveReload<S, ReqPred, ResPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        #[allow(deprecated)]
         LiveReload::new(
             inner,
             self.reloader.clone(),
