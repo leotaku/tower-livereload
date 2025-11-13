@@ -149,9 +149,9 @@ impl LiveReloadLayer {
 impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     /// Set a custom prefix for internal routes for the given
     /// [`LiveReloadLayer`].
-    pub fn custom_prefix<P: AsRef<str>>(self, prefix: P) -> Self {
+    pub fn custom_prefix<P: Into<String>>(self, prefix: P) -> Self {
         Self {
-            custom_prefix: Some(prefix.as_ref().to_owned()),
+            custom_prefix: Some(prefix.into()),
             ..self
         }
     }
