@@ -102,9 +102,9 @@ pub struct Reloader {
 impl Reloader {
     /// Create a new [`Reloader`].
     ///
-    /// This can be manually passed to the [`LiveReload`] constructor, but in
-    /// most cases the [`LiveReloadLayer`] and [`LiveReloadLayer::reloader`]
-    /// utilities are preferred.
+    /// A standalone [`Reloader`] is not useful in most cases. Instead, the
+    /// [`LiveReloadLayer::reloader`] utility should be used to create a
+    /// [`Reloader`] that can send reload requests to connected clients.
     pub fn new() -> Self {
         let (sender, _) = tokio::sync::broadcast::channel(1);
         Self { sender }
@@ -133,8 +133,7 @@ pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'s
 }
 
 impl LiveReloadLayer {
-    /// Create a new [`LiveReloadLayer`] with the default prefix for internal
-    /// routes.
+    /// Create a new [`LiveReloadLayer`] with default settings.
     pub fn new() -> Self {
         Self {
             custom_prefix: None,
@@ -147,8 +146,11 @@ impl LiveReloadLayer {
 }
 
 impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
-    /// Set a custom prefix for internal routes for the given
+    /// Set a custom prefix for internal routes of the given
     /// [`LiveReloadLayer`].
+    ///
+    /// Note that the provided prefix is not normalized before comparison. As
+    /// such, it has to include a leading slash to match URL paths correctly.
     pub fn custom_prefix<P: Into<String>>(self, prefix: P) -> Self {
         Self {
             custom_prefix: Some(prefix.into()),

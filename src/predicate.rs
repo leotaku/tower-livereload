@@ -2,7 +2,7 @@
 //!
 //! Note that in addition to the predicates exported by this module,
 //! [`Predicate`] is also implemented for `Fn(&T) -> bool + Copy`,
-//! which is useful for quickly getting an arbitrary predicate.
+//! which is useful for quickly constructing an arbitrary predicate.
 use http::{header, Response};
 
 /// Trait for predicates that check if a value matches them.
