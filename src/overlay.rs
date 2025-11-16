@@ -170,7 +170,9 @@ where
 {
     fn from(value: OverlayError<L, R>) -> Self {
         match value {
+            #[allow(unreachable_code)]
             OverlayError::Left(left) => left.into(),
+            #[allow(unreachable_code)]
             OverlayError::Right(right) => right.into(),
         }
     }
