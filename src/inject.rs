@@ -1,4 +1,7 @@
-use std::{future::Future, task::{ready, Poll}};
+use std::{
+    future::Future,
+    task::{ready, Poll},
+};
 
 use bytes::{Buf, Bytes};
 use http::{header, Request, Response};

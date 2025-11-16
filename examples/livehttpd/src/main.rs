@@ -2,8 +2,7 @@ use axum::{http, Router};
 use clap::Parser;
 use notify::Watcher as _;
 use tower::layer::util::Stack;
-use tower_http::services::ServeDir;
-use tower_http::set_header::SetResponseHeaderLayer;
+use tower_http::{services::ServeDir, set_header::SetResponseHeaderLayer};
 use tower_livereload::LiveReloadLayer;
 
 #[derive(Parser)]

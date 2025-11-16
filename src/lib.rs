@@ -84,12 +84,15 @@ mod sse;
 use std::{convert::Infallible, time::Duration};
 
 use http::{header, Request, Response, StatusCode};
-use inject::InjectService;
-use overlay::OverlayService;
-use predicate::{Always, ContentTypeStartsWith, Predicate};
-use sse::ReloadEventsBody;
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
+
+use crate::{
+    inject::InjectService,
+    overlay::OverlayService,
+    predicate::{Always, ContentTypeStartsWith, Predicate},
+    sse::ReloadEventsBody,
+};
 
 const DEFAULT_PREFIX: &str = "/_tower-livereload";
 
