@@ -9,7 +9,7 @@
   "author": "Leo Gaskin <leo.gaskin@le0.gs>",
   "license": "MIT OR Apache-2.0",
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
-    "@types/node": "^22.18.1"
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^22.19.1"
   }
 }
