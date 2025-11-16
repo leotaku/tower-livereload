@@ -91,7 +91,7 @@ use sse::ReloadEventsBody;
 use tokio::sync::broadcast::Sender;
 use tower::{Layer, Service};
 
-const DEFAULT_PREFIX: &str = "/tower-livereload/long-name-to-avoid-collisions";
+const DEFAULT_PREFIX: &str = "/_tower-livereload";
 
 /// Utility to send reload requests to clients.
 #[derive(Clone, Debug)]
@@ -135,9 +135,6 @@ pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'s
 impl LiveReloadLayer {
     /// Create a new [`LiveReloadLayer`] with the default prefix for internal
     /// routes.
-    ///
-    /// The default prefix is deliberately long and specific to avoid any
-    /// accidental collisions with the wrapped service.
     pub fn new() -> Self {
         Self {
             custom_prefix: None,
@@ -146,15 +143,6 @@ impl LiveReloadLayer {
             res_predicate: ContentTypeStartsWith::new("text/html"),
             reload_interval: Duration::from_secs(1),
         }
-    }
-
-    /// Create a new [`LiveReloadLayer`] with a custom prefix.
-    #[deprecated(
-        since = "0.8.0",
-        note = "please use `LiveReloadLayer::new` and `custom_prefix` instead"
-    )]
-    pub fn with_custom_prefix<P: Into<String>>(prefix: P) -> Self {
-        Self::new().custom_prefix(prefix)
     }
 }
 
@@ -238,7 +226,6 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
     type Service = LiveReload<S, ReqPred, ResPred>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        #[allow(deprecated)]
         LiveReload::new(
             inner,
             self.reloader.clone(),
@@ -263,12 +250,7 @@ pub struct LiveReload<S, ReqPred = Always, ResPred = ContentTypeStartsWith<&'sta
 }
 
 impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
-    #[deprecated(
-        since = "0.9.0",
-        note = "please use `LiveReloadLayer::new().layer(service)` instead"
-    )]
-    /// Create a new [`LiveReload`] middleware.
-    pub fn new<P: Into<String>>(
+    fn new<P: AsRef<str>>(
         service: S,
         reloader: Reloader,
         req_predicate: ReqPred,
@@ -276,7 +258,7 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         reload_interval: Duration,
         prefix: P,
     ) -> Self {
-        let event_stream_path = format!("{}/event-stream", prefix.into());
+        let event_stream_path = format!("{}/event-stream", prefix.as_ref());
         let inject = InjectService::new(
             service,
             format!(
