@@ -12,7 +12,7 @@ repository = "https://github.com/leotaku/tower-livereload"
 version = "1.0.14-wip"
 
 [dependencies]
-axum = "0.8.6"
+axum = "0.8.7"
 clap = { version = "4.5.51", features = ["derive"] }
 notify = "8.2.0"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
