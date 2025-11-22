@@ -238,8 +238,7 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
             self.res_predicate,
             self.reload_interval,
             self.custom_prefix
-                .as_ref()
-                .cloned()
+                .clone()
                 .unwrap_or_else(|| DEFAULT_PREFIX.to_owned()),
         )
     }
