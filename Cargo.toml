@@ -1,3 +1,7 @@
+[workspace]
+members = ["examples/*"]
+resolver = "2"
+
 [package]
 authors = ["Leo Gaskin <leo.gaskin@le0.gs>"]
 categories = ["development-tools", "web-programming"]
