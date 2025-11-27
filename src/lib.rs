@@ -81,10 +81,10 @@ mod overlay;
 pub mod predicate;
 mod sse;
 
-use std::{convert::Infallible, time::Duration};
+use std::{convert::Infallible, sync::Arc, time::Duration};
 
 use http::{header, Request, Response, StatusCode};
-use tokio::sync::broadcast::Sender;
+use tokio::sync::Notify;
 use tower::{Layer, Service};
 
 use crate::{
@@ -99,7 +99,7 @@ const DEFAULT_PREFIX: &str = "/_tower-livereload";
 /// Utility to send reload requests to clients.
 #[derive(Clone, Debug)]
 pub struct Reloader {
-    sender: Sender<()>,
+    sender: Arc<Notify>,
 }
 
 impl Reloader {
@@ -109,13 +109,14 @@ impl Reloader {
     /// [`LiveReloadLayer::reloader`] utility should be used to create a
     /// [`Reloader`] that can send reload requests to connected clients.
     pub fn new() -> Self {
-        let (sender, _) = tokio::sync::broadcast::channel(1);
-        Self { sender }
+        Self {
+            sender: Arc::new(Notify::new()),
+        }
     }
 
     /// Send a reload request to all open clients.
     pub fn reload(&self) {
-        self.sender.send(()).ok();
+        self.sender.notify_waiters();
     }
 }
 
@@ -281,7 +282,7 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
                         .status(StatusCode::OK)
                         .header(header::CONTENT_TYPE, "text/event-stream")
                         .body(ReloadEventsBody::new(
-                            reloader.sender.subscribe(),
+                            reloader.sender.clone(),
                             reload_interval,
                         ))
                         .map_err(|_| unreachable!()),
