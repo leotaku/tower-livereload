@@ -1,6 +1,7 @@
+use std::path::Path;
+
 use axum::{http::Request, Router};
 use notify::Watcher;
-use std::path::Path;
 use tower_http::services::ServeDir;
 use tower_livereload::LiveReloadLayer;
 
