@@ -16,7 +16,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .fallback_service(ServeDir::new(Path::new("assets")))
         .layer(livereload.request_predicate(not_htmx_predicate));
 
-    let mut watcher = notify::recommended_watcher(move |_| reloader.reload())?;
+    let mut watcher = notify::recommended_watcher(move |event: Result<_, _>| {
+        if event.is_ok_and(|evt: notify::Event| !evt.kind.is_access()) {
+            reloader.reload()
+        }
+    })?;
     watcher.watch(Path::new("assets"), notify::RecursiveMode::Recursive)?;
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3030").await?;
