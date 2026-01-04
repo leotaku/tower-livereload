@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 name = "livehttpd"
 readme = "README.md"
 repository = "https://github.com/leotaku/tower-livereload"
-version = "1.0.16"
+version = "1.0.17-wip"
 
 [dependencies]
 axum = "0.8.8"
@@ -18,5 +18,5 @@ notify = "8.2.0"
 tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.8", features = ["fs", "set-header"] }
-tower-livereload = { version = "0.10.2" }
+tower-livereload = { version = "0.10.3-wip", path = "../.." }
 tracing-subscriber = "0.3.22"
