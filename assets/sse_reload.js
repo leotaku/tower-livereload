@@ -19,7 +19,8 @@
     source.addEventListener("error", onerror);
 
     addEventListener("pagehide", () => {
-      source.removeEventListener("error", onerror)
+      source.removeEventListener("error", onerror);
+      source.close();
     });
   });
 })();
