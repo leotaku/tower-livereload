@@ -83,6 +83,7 @@ mod sse;
 
 use std::{convert::Infallible, sync::Arc, time::Duration};
 
+use bytes::Bytes;
 use http::{header, Request, Response, StatusCode};
 use tokio::sync::Notify;
 use tower::{Layer, Service};
@@ -134,6 +135,7 @@ pub struct LiveReloadLayer<ReqPred = Always, ResPred = ContentTypeStartsWith<&'s
     req_predicate: ReqPred,
     res_predicate: ResPred,
     reload_interval: Duration,
+    inject_payload: Bytes,
 }
 
 impl LiveReloadLayer {
@@ -145,6 +147,7 @@ impl LiveReloadLayer {
             req_predicate: Always,
             res_predicate: ContentTypeStartsWith::new("text/html"),
             reload_interval: Duration::from_secs(1),
+            inject_payload: (&include_bytes!("../assets/sse_reload.js")[..]).into(),
         }
     }
 }
@@ -180,6 +183,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
             req_predicate: predicate,
             res_predicate: self.res_predicate,
             reload_interval: self.reload_interval,
+            inject_payload: self.inject_payload,
         }
     }
 
@@ -205,6 +209,7 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
             req_predicate: self.req_predicate,
             res_predicate: predicate,
             reload_interval: self.reload_interval,
+            inject_payload: self.inject_payload,
         }
     }
 
@@ -212,6 +217,27 @@ impl<ReqPred, ResPred> LiveReloadLayer<ReqPred, ResPred> {
     pub fn reload_interval(self, interval: Duration) -> Self {
         Self {
             reload_interval: interval,
+            ..self
+        }
+    }
+
+    /// Set a custom JavaScript payload to be injected into the HTML response.
+    ///
+    /// By default, the layer injects a pre-defined script that establishes a connection
+    /// to the server-sent events (SSE) endpoint and reloads the page upon receiving a
+    /// reload event.
+    ///
+    /// You can use this method to override the default client-side behavior. This is
+    /// particularly useful for implementing custom polling logic, handling abrupt socket
+    /// closures, or modifying the reconnection strategy.
+    ///
+    /// Note that the provided payload should be valid JavaScript. The layer will
+    /// automatically wrap it in the appropriate `<script>` tags during injection.
+    ///
+    /// [pre-defined script]: https://github.com/leotaku/tower-livereload/blob/master/assets/sse_reload.js
+    pub fn inject_payload<B: Into<Bytes>>(self, payload: B) -> Self {
+        Self {
+            inject_payload: payload.into(),
             ..self
         }
     }
@@ -241,6 +267,7 @@ impl<S, ReqPred: Copy, ResPred: Copy> Layer<S> for LiveReloadLayer<ReqPred, ResP
             self.custom_prefix
                 .clone()
                 .unwrap_or_else(|| DEFAULT_PREFIX.to_owned()),
+            self.inject_payload.clone(),
         )
     }
 }
@@ -262,15 +289,19 @@ impl<S, ReqPred, ResPred> LiveReload<S, ReqPred, ResPred> {
         res_predicate: ResPred,
         reload_interval: Duration,
         prefix: P,
+        inject_payload: Bytes,
     ) -> Self {
         let event_stream_path = format!("{}/event-stream", prefix.as_ref());
         let inject = InjectService::new(
             service,
-            format!(
-                r#"<script data-event-stream="{path}">{code}</script>"#,
-                path = event_stream_path,
-                code = include_str!("../assets/sse_reload.js"),
-            )
+            [
+                Bytes::from_static(br#"<script data-event-stream=""#),
+                Bytes::from_iter(event_stream_path.bytes()),
+                Bytes::from_static(br#"">"#),
+                inject_payload,
+                Bytes::from_static(b"</script>"),
+            ]
+            .join(&b""[..])
             .into(),
             req_predicate,
             res_predicate,
