@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Example Page</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "idiomorph": "https://unpkg.com/idiomorph@0.7.4/dist/idiomorph.esm.js"
+        },
+        "integrity": {
+          "https://unpkg.com/idiomorph@0.7.4/dist/idiomorph.esm.js": "sha384-7KfZ9UUKXs079N8+OdFX+RL3Odsb847C2HfcD5MsE/PPYvCszCENdGkf/oakCk4p"
+        }
+      }
+    </script>
+    <script type="module">
+      import { Idiomorph } from "idiomorph";
+
+      async function replace(url) {
+        const html = await fetch(url).then((rsp) => rsp.text());
+        const newDocument = new DOMParser().parseFromString(html, "text/html");
+        Idiomorph.morph(document.documentElement, newDocument.documentElement);
+      }
+
+      new EventSource("/axum-idiomorph/event-stream").addEventListener(
+        "reload",
+        () => replace(document.location),
+      );
+    </script>
+  </head>
+  <body>
+    <h1>Example</h1>
+    <div>Lorem ipsum dolor sit amet</div>
+  </body>
+</html>
