@@ -5,7 +5,6 @@
 
 [crates-url]: https://crates.io/crates/livehttpd
 [librs-url]: https://lib.rs/crates/livehttpd
-
 [crates-badge]: https://img.shields.io/crates/v/livehttpd.svg
 [librs-badge]: https://img.shields.io/badge/lib.rs-linked-informational
 

@@ -9,7 +9,6 @@
 [crates-url]: https://crates.io/crates/tower-livereload
 [librs-url]: https://lib.rs/crates/tower-livereload
 [docs-url]: https://docs.rs/tower-livereload
-
 [build-badge]: https://img.shields.io/github/actions/workflow/status/leotaku/tower-livereload/build.yml?branch=master
 [crates-badge]: https://img.shields.io/crates/v/tower-livereload.svg
 [librs-badge]: https://img.shields.io/badge/lib.rs-linked-informational
