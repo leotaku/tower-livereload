@@ -15,8 +15,8 @@ version = "1.0.18-wip"
 axum = "0.8.9"
 clap = { version = "4.6.1", features = ["derive"] }
 notify = "8.2.0"
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.3"
-tower-http = { version = "0.6.8", features = ["fs", "set-header"] }
+tower-http = { version = "0.6.10", features = ["fs", "set-header"] }
 tower-livereload = { version = "0.10.4-wip", path = "../.." }
 tracing-subscriber = "0.3.23"
